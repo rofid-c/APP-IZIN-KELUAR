@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#065f46">
+  <title>E-IZIN • Pengadilan Agama Gunung Sugih</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            court: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- HTML2PDF Library for High-Quality PDF Generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- ================= MOBILE CONTAINER ================= -->
+  <div class="mobile-container">
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 1: HALAMAN LOGIN (PEGAWAI / KETUA JABATAN)                           -->
+    <!-- ========================================================================= -->
+    <div id="viewLogin" class="flex-1 flex flex-col justify-center px-6 py-8 space-y-5">
+      
+      <!-- Identitas & Logo Resmi -->
+      <div class="text-center space-y-1.5">
+        <div class="w-20 h-24 mx-auto mb-2 flex items-center justify-center">
+          <img src="/logo-pa.svg" alt="Logo PA Gunung Sugih" class="w-full h-full object-contain">
+        </div>
+        <h1 class="text-base font-extrabold text-slate-900 tracking-tight leading-snug">
+          PENGADILAN AGAMA GUNUNG SUGIH
+        </h1>
+        <p class="text-[11px] text-court-700 font-bold uppercase tracking-wider">
+          Aplikasi Izin Keluar Kantor
+        </p>
+      </div>
+
+      <!-- Tab Navigasi Masuk / Daftar Akun Pegawai -->
+      <div class="flex p-1 bg-slate-200/90 rounded-2xl text-xs font-bold">
+        <button id="tabBtnLogin" type="button" onclick="App.switchAuthTab('login')"
+          class="flex-1 py-2 rounded-xl text-center transition bg-white text-court-800 shadow-xs font-bold">
+          Masuk Akun
+        </button>
+        <button id="tabBtnRegister" type="button" onclick="App.switchAuthTab('register')"
+          class="flex-1 py-2 rounded-xl text-center transition text-slate-600 hover:text-slate-900 font-semibold">
+          Daftar Pegawai
+        </button>
+      </div>
+
+      <!-- Form Login -->
+      <form id="formLogin" class="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-3.5 shadow-xs">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Nama Pegawai / Pejabat</label>
+          <input type="text" id="loginNama" required placeholder="Masukkan nama Anda"
+            class="w-full px-3 py-2.5 text-xs bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-court-600 font-medium">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Nomor Induk Pegawai (NIP)</label>
+          <input type="text" id="loginNip" required placeholder="Masukkan 18 digit NIP Anda"
+            class="w-full px-3 py-2.5 text-xs bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-court-600 font-medium">
+        </div>
+
+        <button type="submit" id="btnSubmitLogin"
+          class="w-full py-3 rounded-xl text-xs font-bold bg-court-700 hover:bg-court-800 text-white shadow-md transition flex items-center justify-center gap-1.5">
+          <i data-lucide="log-in" class="w-4 h-4"></i> Masuk ke Aplikasi
+        </button>
+      </form>
+
+      <!-- Form Pendaftaran Akun Pegawai Baru -->
+      <form id="formRegister" class="hidden bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-3.5 shadow-xs">
+        <div class="text-left border-b border-slate-200/80 pb-2">
+          <h3 class="text-xs font-bold text-slate-900">Daftar Akun Pegawai Baru</h3>
+          <p class="text-[10px] text-slate-500">Buat akun menggunakan Nama dan NIP</p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Nama Pegawai *</label>
+          <input type="text" id="regNama" required placeholder="Masukkan nama lengkap Anda"
+            class="w-full px-3 py-2.5 text-xs bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-court-600 font-medium">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Jabatan *</label>
+          <input type="text" id="regJabatan" required placeholder="Contoh: Pranata Komputer Ahli Pertama"
+            class="w-full px-3 py-2.5 text-xs bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-court-600 font-medium">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Nomor Induk Pegawai (NIP) *</label>
+          <input type="text" id="regNip" required placeholder="Contoh: 199208152019031002 (18 digit)"
+            class="w-full px-3 py-2.5 text-xs bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-court-600 font-medium">
+        </div>
+
+        <button type="submit" id="btnSubmitRegister"
+          class="w-full py-3 rounded-xl text-xs font-bold bg-court-700 hover:bg-court-800 text-white shadow-md transition flex items-center justify-center gap-1.5">
+          <i data-lucide="user-plus" class="w-4 h-4"></i> Daftar & Masuk Pegawai
+        </button>
+
+        <p class="text-[10px] text-center text-slate-400">
+          *Akun Ketua Jabatan dikelola khusus oleh instansi.
+        </p>
+      </form>
+
+      <!-- Bantuan Masuk Cepat (Akun Contoh) -->
+      <div id="demoAccountsBox" class="bg-emerald-50/80 border border-emerald-200 rounded-xl p-3.5 text-xs text-emerald-950 space-y-2">
+        <div class="flex items-center gap-1 font-bold text-court-800 text-[11px]">
+          <i data-lucide="key-round" class="w-3.5 h-3.5"></i>
+          <span>Pilih Akun Contoh untuk Mencoba (Nama & NIP):</span>
+        </div>
+        
+        <div class="grid grid-cols-1 gap-2 pt-1">
+          <!-- Akun Contoh 1: Pegawai -->
+          <button type="button" onclick="App.autoFill('pegawai')"
+            class="w-full py-2 px-3 rounded-lg text-left bg-white border border-emerald-300 hover:bg-emerald-100 transition flex items-center justify-between">
+            <div>
+              <p class="text-xs font-bold text-slate-900">👤 Pegawai (Ahmad Fauzi)</p>
+              <p class="text-[10px] text-slate-500">NIP: 199208152019031002</p>
+            </div>
+            <span class="text-[10px] font-bold text-court-700 bg-court-50 px-2 py-0.5 rounded">Isi Form</span>
+          </button>
+
+          <!-- Akun Contoh 2: Ketua Jabatan (Approver) -->
+          <button type="button" onclick="App.autoFill('ketua')"
+            class="w-full py-2 px-3 rounded-lg text-left bg-white border border-amber-300 hover:bg-amber-50 transition flex items-center justify-between">
+            <div>
+              <p class="text-xs font-bold text-slate-900">⚖️ Ketua Jabatan (Dr. H. Ahmad Zarkasi)</p>
+              <p class="text-[10px] text-slate-500">NIP: 197405102001121001</p>
+            </div>
+            <span class="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded">Isi Form</span>
+          </button>
+        </div>
+      </div>
+
+      <p class="text-[10px] text-center text-slate-400">
+        Mahkamah Agung RI • PA Gunung Sugih Kelas IB
+      </p>
+
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 2: DASHBOARD PEGAWAI (ROLE: PEGAWAI)                                  -->
+    <!-- ========================================================================= -->
+    <div id="viewDashboardPegawai" class="flex-1 flex flex-col hidden">
+      
+      <!-- Top Bar Pegawai -->
+      <header class="bg-court-800 text-white px-4 py-3 flex items-center justify-between sticky top-0 z-30 shadow-xs">
+        <div class="flex items-center gap-2">
+          <img src="/logo-pa.svg" alt="Logo" class="w-7 h-8 object-contain">
+          <div>
+            <h1 class="text-xs font-extrabold tracking-tight leading-tight">PA GUNUNG SUGIH</h1>
+            <p class="text-[9px] text-emerald-200 font-medium">Izin Keluar Pegawai</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span id="pegawaiHeaderNama" class="text-xs font-bold text-white max-w-[110px] truncate">
+            Ahmad Fauzi
+          </span>
+          <button onclick="App.logout()" title="Keluar" 
+            class="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-white transition flex items-center gap-1 text-[11px]">
+            <i data-lucide="log-out" class="w-3.5 h-3.5 text-emerald-300"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- Main Pegawai -->
+      <main class="flex-1 px-4 py-4 space-y-4">
+        
+        <!-- Sapaan Pegawai -->
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center justify-between">
+          <div>
+            <p class="text-[10px] text-slate-500 font-medium">Pegawai Aktif</p>
+            <h2 id="pegawaiNamaCard" class="text-sm font-extrabold text-slate-900 leading-tight">
+              Ahmad Fauzi
+            </h2>
+            <p id="pegawaiJabatanCard" class="text-[10px] text-court-700 font-semibold mt-0.5">
+              Pranata Komputer
+            </p>
+          </div>
+          <span id="pegawaiPresenceBadge" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 inline-flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> Di Kantor
+          </span>
+        </div>
+
+        <!-- SATU TOMBOL AJUKAN IZIN KELUAR -->
+        <button onclick="App.openPengajuanModal()" 
+          class="w-full py-3.5 rounded-2xl text-xs font-extrabold bg-court-700 hover:bg-court-800 text-white shadow-md shadow-court-800/20 active:scale-98 transition flex items-center justify-center gap-2">
+          <i data-lucide="plus-circle" class="w-4 h-4"></i>
+          Ajukan Izin Keluar Kantor
+        </button>
+
+        <!-- KARTU IZIN AKTIF (TANPA QR CODE, HANYA INFO & CHECK-IN) -->
+        <div id="pegawaiActiveCard" class="hidden">
+          <!-- Diisi otomatis oleh JS -->
+        </div>
+
+        <!-- DAFTAR RIWAYAT IZIN PEGAWAI -->
+        <div class="space-y-3 pt-2">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-extrabold text-slate-800 uppercase tracking-wider">
+              Riwayat Izin Keluar
+            </h3>
+            <span id="pegawaiIzinCount" class="text-[11px] text-slate-500 font-semibold">-</span>
+          </div>
+
+          <!-- Filter Tab -->
+          <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+            <button data-filter="all" class="pegawai-filter-btn px-3 py-1 rounded-full text-[11px] font-bold bg-court-800 text-white">
+              Semua
+            </button>
+            <button data-filter="pending" class="pegawai-filter-btn px-3 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+              Menunggu
+            </button>
+            <button data-filter="approved" class="pegawai-filter-btn px-3 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+              Disetujui
+            </button>
+            <button data-filter="completed" class="pegawai-filter-btn px-3 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+              Selesai
+            </button>
+          </div>
+
+          <!-- List Riwayat Pegawai -->
+          <div id="pegawaiIzinList" class="space-y-2.5">
+            <!-- Diisi otomatis oleh JS: Pegawai TIDAK memiliki tombol Setujui/Tolak! Hanya tombol Hapus jika pending -->
+          </div>
+
+          <div id="pegawaiEmptyState" class="hidden py-8 text-center text-xs text-slate-400">
+            Belum ada data izin keluar.
+          </div>
+        </div>
+
+      </main>
+
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 3: DASHBOARD KETUA JABATAN (ROLE: KETUA_JABATAN / APPROVER)          -->
+    <!-- ========================================================================= -->
+    <div id="viewDashboardKetua" class="flex-1 flex flex-col hidden">
+      
+      <!-- Top Bar Ketua Jabatan -->
+      <header class="bg-slate-900 text-white px-4 py-3 flex items-center justify-between sticky top-0 z-30 shadow-xs border-b border-amber-500/30">
+        <div class="flex items-center gap-2">
+          <img src="/logo-pa.svg" alt="Logo" class="w-7 h-8 object-contain">
+          <div>
+            <h1 class="text-xs font-extrabold tracking-tight leading-tight">PA GUNUNG SUGIH</h1>
+            <span class="text-[9px] font-bold text-amber-300 bg-amber-900/60 px-1.5 py-0.5 rounded border border-amber-500/30">
+              PANEL KETUA JABATAN
+            </span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span id="ketuaHeaderNama" class="text-xs font-bold text-white max-w-[120px] truncate hidden sm:inline">
+            Dr. H. Ahmad Zarkasi
+          </span>
+          <button onclick="App.logout()" title="Keluar" 
+            class="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-white transition flex items-center gap-1 text-[11px]">
+            <i data-lucide="log-out" class="w-3.5 h-3.5 text-amber-300"></i>
+            <span class="text-[10px]">Keluar</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Main Ketua Jabatan -->
+      <main class="flex-1 px-4 py-4 space-y-3.5 bg-slate-50">
+        
+        <!-- Kartu Identitas Ketua Jabatan -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-3.5 shadow-2xs space-y-1">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Ketua Jabatan</p>
+              <h2 id="ketuaNamaCard" class="text-sm font-extrabold text-slate-900 leading-tight">
+                Dr. H. Ahmad Zarkasi, S.H.I., M.H.
+              </h2>
+              <p id="ketuaJabatanCard" class="text-[11px] text-amber-800 font-semibold mt-0.5">
+                Ketua Pengadilan Agama
+              </p>
+            </div>
+            <span id="ketuaPresenceBadge" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 inline-flex items-center gap-1 shrink-0">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> Di Kantor
+            </span>
+          </div>
+        </div>
+
+        <!-- 2 MENU UTAMA KETUA JABATAN: APROVAL & BUAT SURAT IZIN -->
+        <div class="grid grid-cols-2 p-1 bg-slate-200/90 rounded-2xl text-xs font-bold gap-1 shadow-2xs">
+          <!-- Menu 1: Approval -->
+          <button id="btnKetuaMenuApproval" type="button" onclick="App.switchKetuaSection('approval')"
+            class="py-2.5 px-2 rounded-xl text-center transition bg-amber-700 text-white shadow-xs font-bold flex items-center justify-center gap-1.5">
+            <i data-lucide="check-square" class="w-4 h-4"></i>
+            <span>Approval</span>
+            <span id="badgeKetuaPendingCount" class="ml-1 px-1.5 py-0.2 text-[10px] bg-white text-amber-900 rounded-full font-black hidden">0</span>
+          </button>
+
+          <!-- Menu 2: Buat Surat Izin -->
+          <button id="btnKetuaMenuBuatIzin" type="button" onclick="App.switchKetuaSection('buat_izin')"
+            class="py-2.5 px-2 rounded-xl text-center transition text-slate-600 hover:text-slate-900 font-semibold flex items-center justify-center gap-1.5">
+            <i data-lucide="file-plus-2" class="w-4 h-4"></i>
+            <span>Buat Surat Izin</span>
+          </button>
+        </div>
+
+        <!-- ======================================================== -->
+        <!-- SUB-HALAMAN 1: MENU APPROVAL (PERSETUJUAN IZIN PEGAWAI)  -->
+        <!-- ======================================================== -->
+        <div id="ketuaSectionApproval" class="space-y-3.5">
+          <!-- Ringkasan Antrean -->
+          <div class="bg-amber-50 border border-amber-200/80 rounded-xl p-3 flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+              <span class="font-bold text-amber-950">Permohonan Masuk Pegawai</span>
+            </div>
+            <span id="ketuaAntreanCount" class="font-extrabold text-amber-800 bg-white border border-amber-300 px-2 py-0.5 rounded-full text-[10px]">
+              0 butuh verifikasi
+            </span>
+          </div>
+
+          <!-- Filter Tab Approval Ketua -->
+          <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+            <button data-ketua-filter="pending" class="ketua-filter-btn px-3 py-1 rounded-full text-[11px] font-bold bg-amber-700 text-white">
+              Perlu Disetujui
+            </button>
+            <button data-ketua-filter="approved" class="ketua-filter-btn px-3 py-1 rounded-full text-[11px] font-semibold bg-white text-slate-600 border border-slate-200">
+              Disetujui
+            </button>
+            <button data-ketua-filter="completed" class="ketua-filter-btn px-3 py-1 rounded-full text-[11px] font-semibold bg-white text-slate-600 border border-slate-200">
+              Selesai
+            </button>
+            <button data-ketua-filter="all" class="ketua-filter-btn px-3 py-1 rounded-full text-[11px] font-semibold bg-white text-slate-600 border border-slate-200">
+              Semua
+            </button>
+          </div>
+
+          <!-- Daftar Permohonan yang Ditujukan ke Ketua Ini -->
+          <div id="ketuaIzinList" class="space-y-3">
+            <!-- Diisi otomatis oleh JS: Ada tombol Setujui dan Tolak -->
+          </div>
+
+          <div id="ketuaEmptyState" class="hidden py-8 text-center text-xs text-slate-400">
+            Tidak ada permohonan izin dalam kategori ini.
+          </div>
+        </div>
+
+        <!-- ======================================================== -->
+        <!-- SUB-HALAMAN 2: MENU BUAT SURAT IZIN (MILIK KETUA JABATAN) -->
+        <!-- ======================================================== -->
+        <div id="ketuaSectionBuatIzin" class="hidden space-y-3.5">
+          <!-- Tombol Ajukan Izin Keluar Kantor untuk Ketua -->
+          <button onclick="App.openPengajuanModal()" 
+            class="w-full py-3.5 rounded-2xl text-xs font-extrabold bg-court-700 hover:bg-court-800 text-white shadow-md shadow-court-800/20 active:scale-98 transition flex items-center justify-center gap-2">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+            Ajukan Izin Keluar Kantor
+          </button>
+
+          <!-- KARTU IZIN AKTIF MILIK KETUA JABATAN -->
+          <div id="ketuaActiveCard" class="hidden">
+            <!-- Diisi otomatis oleh JS -->
+          </div>
+
+          <!-- RIWAYAT IZIN KELUAR MILIK KETUA JABATAN -->
+          <div class="space-y-3 pt-1">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-extrabold text-slate-800 uppercase tracking-wider">
+                Riwayat Surat Izin Saya
+              </h3>
+              <span id="ketuaRiwayatCount" class="text-[11px] text-slate-500 font-semibold">-</span>
+            </div>
+
+            <!-- Filter Tab Riwayat Ketua -->
+            <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+              <button data-ketua-myfilter="all" class="ketua-myfilter-btn px-3 py-1 rounded-full text-[11px] font-bold bg-court-800 text-white">
+                Semua
+              </button>
+              <button data-ketua-myfilter="pending" class="ketua-myfilter-btn px-3 py-1 rounded-full text-[11px] font-semibold bg-white text-slate-600 border border-slate-200">
+                Menunggu
+              </button>
+              <button data-ketua-myfilter="approved" class="ketua-myfilter-btn px-3 py-1 rounded-full text-[11px] font-semibold bg-white text-slate-600 border border-slate-200">
+                Disetujui
+              </button>
+              <button data-ketua-myfilter="completed" class="ketua-myfilter-btn px-3 py-1 rounded-full text-[11px] font-semibold bg-white text-slate-600 border border-slate-200">
+                Selesai
+              </button>
+            </div>
+
+            <!-- List Riwayat Izin Ketua Sendiri -->
+            <div id="ketuaMyIzinList" class="space-y-2.5">
+              <!-- Diisi otomatis oleh JS -->
+            </div>
+
+            <div id="ketuaMyEmptyState" class="hidden py-8 text-center text-xs text-slate-400">
+              Belum ada riwayat izin keluar yang Anda ajukan.
+            </div>
+          </div>
+        </div>
+
+      </main>
+
+    </div>
+
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 1: FORM PENGAJUAN IZIN KELUAR (UNTUK PEGAWAI)                       -->
+  <!-- ========================================================================= -->
+  <div id="modalPengajuan" class="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4 modal-hidden">
+    <div class="bg-white rounded-2xl w-full max-w-sm p-5 shadow-2xl space-y-3.5 max-h-[92vh] overflow-y-auto">
+      
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <div>
+          <h3 class="text-sm font-extrabold text-slate-900">Form Izin Keluar Kantor</h3>
+          <p class="text-[10px] text-slate-500">Isi data dan bubuhkan tanda tangan</p>
+        </div>
+        <button onclick="App.closePengajuanModal()" class="w-7 h-7 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <form id="formPengajuanIzin" class="space-y-3">
+        
+        <!-- 1. PILIH KETUA JABATAN PERIZINAN -->
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-1">
+            Pilih Ketua Jabatan Perizinan *
+          </label>
+          <select id="atasanId" name="atasanId" required
+            class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-court-600 font-semibold text-slate-900">
+            <!-- Diisi otomatis oleh JS -->
+          </select>
+        </div>
+
+        <!-- 2. NAMA PEMOHON -->
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-1">Nama Pemohon *</label>
+          <input type="text" id="formNama" name="nama" required
+            class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none font-semibold text-slate-900">
+        </div>
+
+        <!-- 3. NIP PEMOHON -->
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-1">Nomor Induk Pegawai (NIP) *</label>
+          <input type="text" id="formNip" name="nip" required readonly
+            class="w-full px-3 py-2 text-xs bg-slate-100 border border-slate-200 rounded-xl focus:outline-none font-semibold text-slate-700 cursor-not-allowed">
+        </div>
+
+        <!-- 4. JABATAN -->
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-1">Jabatan Pemohon *</label>
+          <input type="text" id="formJabatan" name="jabatan" required
+            class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none font-semibold text-slate-900">
+        </div>
+
+        <!-- 5. TANGGAL IZIN -->
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-1">Tanggal Izin *</label>
+          <input type="date" id="tanggalIzin" name="tanggalIzin" required
+            class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none font-bold text-slate-900">
+        </div>
+
+        <!-- 6. JAM KELUAR & JAM MASUK -->
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 mb-1">Jam Keluar *</label>
+            <input type="time" id="jamKeluar" name="jamKeluar" required
+              class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none font-bold text-slate-900">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 mb-1">Jam Masuk *</label>
+            <input type="time" id="jamMasuk" name="jamMasuk" required
+              class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none font-bold text-slate-900">
+          </div>
+        </div>
+
+        <!-- 7. KETERANGAN KEPERLUAN -->
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-1">Keterangan Keperluan Izin *</label>
+          <textarea id="formKeterangan" name="keterangan" rows="2" required placeholder="Tuliskan alasan keperluan izin keluar kantor..."
+            class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none"></textarea>
+        </div>
+
+        <!-- 8. TTD DIGITAL -->
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="text-[11px] font-bold text-slate-700">Tanda Tangan Digital (TTD) *</label>
+            <button type="button" onclick="App.clearSignature()" class="text-[10px] text-red-600 font-semibold hover:underline">
+              Hapus / Ulangi
+            </button>
+          </div>
+          <div class="border-2 border-dashed border-slate-300 rounded-xl overflow-hidden bg-slate-50">
+            <canvas id="sigCanvas" class="w-full h-28 block bg-slate-50"></canvas>
+          </div>
+          <p class="text-[9px] text-slate-400 mt-0.5">Goreskan tanda tangan dengan jari Anda di kotak atas.</p>
+        </div>
+
+        <!-- 7. TOMBOL KIRIM -->
+        <div class="flex items-center gap-2 pt-2">
+          <button type="button" onclick="App.closePengajuanModal()" 
+            class="w-1/3 py-2.5 rounded-xl text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200">
+            Batal
+          </button>
+          <button type="submit" id="btnSubmitPengajuan"
+            class="flex-1 py-2.5 rounded-xl text-xs font-bold bg-court-700 hover:bg-court-800 text-white shadow-sm flex items-center justify-center gap-1.5">
+            <i data-lucide="send" class="w-3.5 h-3.5"></i> Kirim Permohonan
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 2: LEMBAR SURAT IZIN RESMI (SESUAI TEMPLATE RESMI PA GUNUNG SUGIH)  -->
+  <!-- ========================================================================= -->
+  <div id="modalTiket" class="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-3 sm:p-4 modal-hidden">
+    <div class="bg-white rounded-2xl w-full max-w-lg p-4 sm:p-6 shadow-2xl space-y-4 max-h-[94vh] overflow-y-auto">
+      
+      <!-- Top Action Bar (Tombol Cetak, Download PDF, Tutup) -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 no-print">
+        <span class="text-[10px] font-extrabold uppercase text-court-800 bg-court-50 px-2 py-0.5 rounded border border-court-200">
+          Surat Izin Keluar Resmi
+        </span>
+        <div class="flex items-center gap-1.5">
+          <button onclick="App.downloadPDF()" 
+            class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-court-700 hover:bg-court-800 text-white flex items-center gap-1 shadow-xs transition">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i> Download PDF
+          </button>
+          <button onclick="App.printTiket()" 
+            class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-900 text-white flex items-center gap-1 transition">
+            <i data-lucide="printer" class="w-3.5 h-3.5"></i> Cetak
+          </button>
+          <button onclick="App.closeTiketModal()" class="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- KERTAS SURAT RESMI (PRINT AREA) -->
+      <div id="printArea" class="bg-white p-3 sm:p-5 text-black font-sans leading-relaxed text-[11px] sm:text-xs border border-slate-200 rounded-xl shadow-xs">
+        
+        <!-- KOP SURAT RESMI PENGADILAN AGAMA GUNUNG SUGIH -->
+        <table class="w-full border-collapse mb-1">
+          <tr>
+            <td class="w-14 sm:w-16 align-middle text-left p-0 pr-2">
+              <img src="/logo-pa.svg" alt="Logo PA" class="w-12 h-16 sm:w-14 sm:h-18 object-contain">
+            </td>
+            <td class="text-center align-middle p-0">
+              <div class="font-bold text-[11px] sm:text-[12px] uppercase leading-tight text-black">
+                MAHKAMAH AGUNG REPUBLIK INDONESIA
+              </div>
+              <div class="font-bold text-[10px] sm:text-[11px] uppercase leading-tight text-black">
+                DIREKTORAT JENDERAL BADAN PERADILAN AGAMA
+              </div>
+              <div class="font-bold text-[10px] sm:text-[11px] uppercase leading-tight text-black">
+                PENGADILAN TINGGI AGAMA BANDAR LAMPUNG
+              </div>
+              <div class="font-extrabold text-[12px] sm:text-[13px] uppercase leading-tight text-black mt-0.5">
+                PENGADILAN AGAMA GUNUNG SUGIH
+              </div>
+              <div class="text-[8px] sm:text-[9px] leading-tight text-black mt-0.5 font-normal">
+                Jalan Negara No. 99 Gunung Sugih, Lampung Tengah, Lampung 34161, (0725) 528885,
+              </div>
+            </td>
+          </tr>
+        </table>
+
+        <!-- GARIS GANDA KOP SURAT (THICK-THIN) -->
+        <div style="border-bottom: 3px double #000; margin-top: 4px; margin-bottom: 14px;"></div>
+
+        <!-- JUDUL SURAT (BOLD, CENTERED, UNDERLINE) -->
+        <div class="text-center my-3">
+          <h2 class="font-bold text-xs sm:text-sm uppercase tracking-wide inline-block border-b border-black pb-0.5 text-black">
+            IZIN KELUAR KANTOR
+          </h2>
+        </div>
+
+        <!-- ISI FORM SURAT IZIN (SESUAI TABEL RESMI) -->
+        <table class="w-full border-collapse my-3 text-[10px] sm:text-[11px] leading-relaxed">
+          <tbody>
+            <tr class="align-top">
+              <td class="py-1 w-44 sm:w-48 text-black font-normal">Yang bertandatangan di bawah ini</td>
+              <td class="py-1 w-4 text-center text-black">:</td>
+              <td class="py-1 font-semibold text-black" id="suratAtasanInfo">-</td>
+            </tr>
+            <tr class="align-top">
+              <td class="py-1 text-black font-normal">Dengan ini memberikan izin kepada</td>
+              <td class="py-1 text-center text-black">:</td>
+              <td class="py-1 font-semibold text-black" id="suratPemohonInfo">-</td>
+            </tr>
+            <tr class="align-top">
+              <td class="py-1 text-black font-normal">Untuk keluar kantor pada</td>
+              <td class="py-1 text-center text-black">:</td>
+              <td class="py-1 font-semibold text-black" id="suratWaktuInfo">-</td>
+            </tr>
+            <tr class="align-top">
+              <td class="py-1 text-black font-normal">Untuk keperluan</td>
+              <td class="py-1 text-center text-black">:</td>
+              <td class="py-1 font-normal text-black" id="suratKeperluanInfo">-</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- KALIMAT PENUTUP RESMI -->
+        <p class="text-justify indent-6 my-4 text-[10px] sm:text-[11px] text-black leading-relaxed">
+          Demikian izin ini diberikan kepada yang bersangkutan untuk digunakan sebagaimana mestinya.
+        </p>
+
+        <!-- DUA KOLOM TANDA TANGAN (PEMOHON & KETUA JABATAN) -->
+        <table class="w-full border-collapse mt-4 text-[10px] sm:text-[11px]">
+          <tr>
+            <!-- Kolom Kiri: Pemohon -->
+            <td class="w-1/2 text-center align-top p-1">
+              <p class="text-black mb-1">Pemohon,</p>
+              <div class="h-16 flex items-center justify-center my-1">
+                <img id="suratTtdPemohon" src="" alt="TTD Pemohon" class="max-h-14 max-w-[120px] object-contain">
+              </div>
+              <p class="font-bold underline text-black mt-1" id="suratNamaBawahPemohon">( ........................................ )</p>
+              <p class="text-black text-[9px] sm:text-[10px]" id="suratNipPemohon">NIP. ........................................</p>
+            </td>
+
+            <!-- Kolom Kanan: Ketua Jabatan / Pimpinan -->
+            <td class="w-1/2 text-center align-top p-1">
+              <p class="text-black" id="suratTanggalTempat">Gunung Sugih, .................... 20...</p>
+              <p class="text-black mb-1" id="suratJabatanBawahAtasan">Ketua Pengadilan Agama Gunung Sugih,</p>
+              <div class="h-16 flex items-center justify-center my-1">
+                <img id="suratTtdAtasan" src="" alt="TTD Ketua Jabatan" class="max-h-14 max-w-[120px] object-contain">
+              </div>
+              <p class="font-bold underline text-black mt-1" id="suratNamaBawahAtasan">( ........................................ )</p>
+              <p class="text-black text-[9px] sm:text-[10px]" id="suratNipAtasan">NIP. ........................................</p>
+            </td>
+          </tr>
+        </table>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL APPROVAL KETUA JABATAN (TTD DIGITAL PENYETUJUAN)                    -->
+  <!-- ========================================================================= -->
+  <div id="modalApprovalKetua" class="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4 modal-hidden">
+    <div class="bg-white rounded-2xl w-full max-w-sm p-5 shadow-2xl space-y-3.5 max-h-[92vh] overflow-y-auto">
+      
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <div>
+          <h3 class="text-xs font-extrabold text-slate-900">Persetujuan & TTD Digital</h3>
+          <p class="text-[10px] text-amber-800 font-semibold">Tanda tangani izin untuk menyetujui</p>
+        </div>
+        <button onclick="App.closeApprovalModal()" class="w-7 h-7 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Ringkasan Singkat Izin -->
+      <div class="bg-amber-50/70 border border-amber-200 rounded-xl p-3 text-[11px] space-y-1">
+        <p class="text-slate-500 text-[10px]">Pemohon:</p>
+        <p class="font-bold text-slate-900" id="approvalModalPemohon">-</p>
+        <p class="text-slate-600 text-[10px]" id="approvalModalWaktu">-</p>
+        <p class="text-slate-700 italic mt-1 pt-1 border-t border-amber-200/60 line-clamp-2" id="approvalModalKeperluan">-</p>
+      </div>
+
+      <!-- Catatan Pimpinan (Opsional) -->
+      <div>
+        <label class="block text-[11px] font-bold text-slate-700 mb-1">Catatan Pimpinan (Opsional)</label>
+        <input type="text" id="approvalCatatanAtasan" placeholder="Contoh: Disetujui, kembali tepat waktu."
+          class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none">
+      </div>
+
+      <!-- Canvas Tanda Tangan Digital Ketua Jabatan -->
+      <div>
+        <div class="flex items-center justify-between mb-1">
+          <label class="text-[11px] font-bold text-amber-900">Tanda Tangan Digital Ketua *</label>
+          <button type="button" onclick="App.clearKetuaSignature()" class="text-[10px] text-red-600 font-semibold hover:underline">
+            Hapus / Ulangi
+          </button>
+        </div>
+        <div class="border-2 border-dashed border-amber-300 rounded-xl overflow-hidden bg-amber-50/30">
+          <canvas id="sigCanvasKetua" class="w-full h-28 block bg-white"></canvas>
+        </div>
+        <p class="text-[9px] text-slate-400 mt-0.5">Bubuhkan tanda tangan Anda di atas untuk mengesahkan surat izin ini.</p>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-2 pt-2">
+        <button type="button" onclick="App.closeApprovalModal()" 
+          class="w-1/3 py-2.5 rounded-xl text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200">
+          Batal
+        </button>
+        <button type="button" id="btnSubmitApprovalKetua" onclick="App.submitApprovalWithSignature()"
+          class="flex-1 py-2.5 rounded-xl text-xs font-bold bg-amber-700 hover:bg-amber-800 text-white shadow-sm flex items-center justify-center gap-1.5 transition">
+          <i data-lucide="check-check" class="w-3.5 h-3.5"></i> Setujui & Sahkan
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 3: CHECK-IN KEMBALI KE KANTOR                                      -->
+  <!-- ========================================================================= -->
+  <div id="modalKembali" class="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4 modal-hidden">
+    <div class="bg-white rounded-2xl w-full max-w-xs p-5 shadow-2xl space-y-3">
+      <h3 class="text-sm font-bold text-slate-900">Konfirmasi Tiba di Kantor</h3>
+      <p class="text-[11px] text-slate-500">Catat waktu kembali Anda di kantor:</p>
+      
+      <div>
+        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Jam Tiba Kembali *</label>
+        <input type="time" id="kembaliJam" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-bold">
+      </div>
+
+      <div class="flex items-center gap-2 pt-2">
+        <button onclick="App.closeKembaliModal()" class="w-1/3 py-2 rounded-xl text-xs font-semibold text-slate-600 bg-slate-100">
+          Batal
+        </button>
+        <button onclick="App.submitKembali()" class="flex-1 py-2 rounded-xl text-xs font-bold bg-court-700 text-white">
+          Simpan
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="fixed top-3 left-4 right-4 z-50 flex flex-col gap-2 max-w-sm mx-auto pointer-events-none"></div>
+
+  <!-- App Script -->
+  <script src="/js/app.js"></script>
+</body>
+</html>

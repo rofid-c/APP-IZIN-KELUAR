@@ -1,0 +1,29 @@
+[
+  {
+    "id": "PEG-001",
+    "nama": "Ahmad Fauzi, S.Kom.",
+    "username": "Ahmad Fauzi",
+    "nip": "199208152019031002",
+    "password": "199208152019031002",
+    "jabatan": "Pranata Komputer Ahli Pertama",
+    "role": "pegawai"
+  },
+  {
+    "id": "KJ-001",
+    "nama": "Dr. H. Ahmad Zarkasi, S.H.I., M.H.",
+    "username": "Ahmad Zarkasi",
+    "nip": "197405102001121001",
+    "password": "197405102001121001",
+    "jabatan": "Ketua Pengadilan Agama Gunung Sugih",
+    "role": "ketua_jabatan"
+  },
+  {
+    "id": "PEG-3666",
+    "nama": "Siti Rahma, S.E.",
+    "username": "Siti Rahma",
+    "nip": "199504122020122003",
+    "password": "199504122020122003",
+    "jabatan": "Staf Kepegawaian",
+    "role": "pegawai"
+  }
+]
