@@ -558,28 +558,28 @@
       </div>
 
       <!-- KERTAS SURAT RESMI (PRINT AREA) -->
-      <div id="printArea" class="bg-white p-3 sm:p-5 text-black font-sans leading-relaxed text-[11px] sm:text-xs border border-slate-200 rounded-xl shadow-xs">
+      <div id="printArea" class="bg-white p-5 sm:p-8 text-black font-sans leading-relaxed text-xs sm:text-sm border border-slate-200 rounded-xl shadow-xs">
         
         <!-- KOP SURAT RESMI PENGADILAN AGAMA GUNUNG SUGIH -->
-        <table class="w-full border-collapse mb-1">
+        <table class="w-full border-collapse mb-2">
           <tr>
-            <td class="w-14 sm:w-16 align-middle text-left p-0 pr-2">
-              <img src="/logo-pa.svg" alt="Logo PA" class="w-12 h-16 sm:w-14 sm:h-18 object-contain">
+            <td class="w-16 sm:w-20 align-middle text-left p-0 pr-3">
+              <img src="/logo-pa.png" alt="Logo PA Gunung Sugih" class="w-14 h-18 sm:w-16 sm:h-20 object-contain">
             </td>
             <td class="text-center align-middle p-0">
-              <div class="font-bold text-[11px] sm:text-[12px] uppercase leading-tight text-black">
+              <div class="font-bold text-xs sm:text-sm uppercase leading-tight text-black">
                 MAHKAMAH AGUNG REPUBLIK INDONESIA
               </div>
-              <div class="font-bold text-[10px] sm:text-[11px] uppercase leading-tight text-black">
+              <div class="font-bold text-[11px] sm:text-xs uppercase leading-tight text-black mt-0.5">
                 DIREKTORAT JENDERAL BADAN PERADILAN AGAMA
               </div>
-              <div class="font-bold text-[10px] sm:text-[11px] uppercase leading-tight text-black">
+              <div class="font-bold text-[11px] sm:text-xs uppercase leading-tight text-black mt-0.5">
                 PENGADILAN TINGGI AGAMA BANDAR LAMPUNG
               </div>
-              <div class="font-extrabold text-[12px] sm:text-[13px] uppercase leading-tight text-black mt-0.5">
+              <div class="font-extrabold text-sm sm:text-base uppercase leading-tight text-black mt-1">
                 PENGADILAN AGAMA GUNUNG SUGIH
               </div>
-              <div class="text-[8px] sm:text-[9px] leading-tight text-black mt-0.5 font-normal">
+              <div class="text-[9px] sm:text-[11px] leading-tight text-black mt-1 font-normal">
                 Jalan Negara No. 99 Gunung Sugih, Lampung Tengah, Lampung 34161, (0725) 528885,
               </div>
             </td>
@@ -587,68 +587,68 @@
         </table>
 
         <!-- GARIS GANDA KOP SURAT (THICK-THIN) -->
-        <div style="border-bottom: 3px double #000; margin-top: 4px; margin-bottom: 14px;"></div>
+        <div style="border-bottom: 3px double #000; margin-top: 6px; margin-bottom: 24px;"></div>
 
         <!-- JUDUL SURAT (BOLD, CENTERED, UNDERLINE) -->
-        <div class="text-center my-3">
-          <h2 class="font-bold text-xs sm:text-sm uppercase tracking-wide inline-block border-b border-black pb-0.5 text-black">
+        <div class="text-center my-6">
+          <h2 class="font-bold text-sm sm:text-base uppercase tracking-wider inline-block border-b-2 border-black pb-0.5 text-black">
             IZIN KELUAR KANTOR
           </h2>
         </div>
 
         <!-- ISI FORM SURAT IZIN (SESUAI TABEL RESMI) -->
-        <table class="w-full border-collapse my-3 text-[10px] sm:text-[11px] leading-relaxed">
+        <table class="w-full border-collapse my-6 text-xs sm:text-[13px] leading-relaxed">
           <tbody>
             <tr class="align-top">
-              <td class="py-1 w-44 sm:w-48 text-black font-normal">Yang bertandatangan di bawah ini</td>
-              <td class="py-1 w-4 text-center text-black">:</td>
-              <td class="py-1 font-semibold text-black" id="suratAtasanInfo">-</td>
+              <td class="py-2 w-48 sm:w-56 text-black font-normal">Yang bertandatangan di bawah ini</td>
+              <td class="py-2 w-5 text-center text-black">:</td>
+              <td class="py-2 font-semibold text-black" id="suratAtasanInfo">-</td>
             </tr>
             <tr class="align-top">
-              <td class="py-1 text-black font-normal">Dengan ini memberikan izin kepada</td>
-              <td class="py-1 text-center text-black">:</td>
-              <td class="py-1 font-semibold text-black" id="suratPemohonInfo">-</td>
+              <td class="py-2 text-black font-normal">Dengan ini memberikan izin kepada</td>
+              <td class="py-2 text-center text-black">:</td>
+              <td class="py-2 font-semibold text-black" id="suratPemohonInfo">-</td>
             </tr>
             <tr class="align-top">
-              <td class="py-1 text-black font-normal">Untuk keluar kantor pada</td>
-              <td class="py-1 text-center text-black">:</td>
-              <td class="py-1 font-semibold text-black" id="suratWaktuInfo">-</td>
+              <td class="py-2 text-black font-normal">Untuk keluar kantor pada</td>
+              <td class="py-2 text-center text-black">:</td>
+              <td class="py-2 font-semibold text-black" id="suratWaktuInfo">-</td>
             </tr>
             <tr class="align-top">
-              <td class="py-1 text-black font-normal">Untuk keperluan</td>
-              <td class="py-1 text-center text-black">:</td>
-              <td class="py-1 font-normal text-black" id="suratKeperluanInfo">-</td>
+              <td class="py-2 text-black font-normal">Untuk keperluan</td>
+              <td class="py-2 text-center text-black">:</td>
+              <td class="py-2 font-normal text-black" id="suratKeperluanInfo">-</td>
             </tr>
           </tbody>
         </table>
 
         <!-- KALIMAT PENUTUP RESMI -->
-        <p class="text-justify indent-6 my-4 text-[10px] sm:text-[11px] text-black leading-relaxed">
+        <p class="text-justify indent-8 my-6 text-xs sm:text-[13px] text-black leading-relaxed">
           Demikian izin ini diberikan kepada yang bersangkutan untuk digunakan sebagaimana mestinya.
         </p>
 
         <!-- DUA KOLOM TANDA TANGAN (PEMOHON & KETUA JABATAN) -->
-        <table class="w-full border-collapse mt-4 text-[10px] sm:text-[11px]">
+        <table class="w-full border-collapse mt-10 sm:mt-14 text-xs sm:text-[13px]">
           <tr>
             <!-- Kolom Kiri: Pemohon -->
-            <td class="w-1/2 text-center align-top p-1">
+            <td class="w-1/2 text-center align-top p-2">
               <p class="text-black mb-1">Pemohon,</p>
-              <div class="h-16 flex items-center justify-center my-1">
-                <img id="suratTtdPemohon" src="" alt="TTD Pemohon" class="max-h-14 max-w-[120px] object-contain">
+              <div class="h-20 flex items-center justify-center my-2">
+                <img id="suratTtdPemohon" src="" alt="TTD Pemohon" class="max-h-18 max-w-[140px] object-contain">
               </div>
-              <p class="font-bold underline text-black mt-1" id="suratNamaBawahPemohon">( ........................................ )</p>
-              <p class="text-black text-[9px] sm:text-[10px]" id="suratNipPemohon">NIP. ........................................</p>
+              <p class="font-bold underline text-black mt-2" id="suratNamaBawahPemohon">( ........................................ )</p>
+              <p class="text-black text-[10px] sm:text-xs mt-0.5" id="suratNipPemohon">NIP. ........................................</p>
             </td>
 
             <!-- Kolom Kanan: Ketua Jabatan / Pimpinan -->
-            <td class="w-1/2 text-center align-top p-1">
+            <td class="w-1/2 text-center align-top p-2">
               <p class="text-black" id="suratTanggalTempat">Gunung Sugih, .................... 20...</p>
               <p class="text-black mb-1" id="suratJabatanBawahAtasan">Ketua Pengadilan Agama Gunung Sugih,</p>
-              <div class="h-16 flex items-center justify-center my-1">
-                <img id="suratTtdAtasan" src="" alt="TTD Ketua Jabatan" class="max-h-14 max-w-[120px] object-contain">
+              <div class="h-20 flex items-center justify-center my-2">
+                <img id="suratTtdAtasan" src="" alt="TTD Ketua Jabatan" class="max-h-18 max-w-[140px] object-contain">
               </div>
-              <p class="font-bold underline text-black mt-1" id="suratNamaBawahAtasan">( ........................................ )</p>
-              <p class="text-black text-[9px] sm:text-[10px]" id="suratNipAtasan">NIP. ........................................</p>
+              <p class="font-bold underline text-black mt-2" id="suratNamaBawahAtasan">( ........................................ )</p>
+              <p class="text-black text-[10px] sm:text-xs mt-0.5" id="suratNipAtasan">NIP. ........................................</p>
             </td>
           </tr>
         </table>

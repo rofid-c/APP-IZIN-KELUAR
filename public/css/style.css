@@ -76,14 +76,21 @@ body {
 
 /* Print Styles */
 @media print {
+  @page {
+    size: A4 portrait;
+    margin: 15mm 20mm;
+  }
   body {
     background: white !important;
+    color: black !important;
+    font-family: 'Times New Roman', Times, serif !important;
   }
   .mobile-container {
     max-width: 100% !important;
     box-shadow: none !important;
     border-radius: 0 !important;
     margin: 0 !important;
+    padding: 0 !important;
   }
   body * {
     visibility: hidden;
@@ -95,10 +102,14 @@ body {
     position: absolute;
     left: 0;
     top: 0;
-    width: 100%;
-    margin: 0;
-    padding: 16px;
-    background: white;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    background: white !important;
   }
   .no-print {
     display: none !important;

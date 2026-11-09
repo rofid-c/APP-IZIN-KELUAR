@@ -1119,6 +1119,7 @@ const App = {
       if (!json.success) return;
 
       const item = json.data;
+      this.state.selectedIzin = item;
       this.state.selectedIzinId = item.id;
 
       // 1. Yang bertandatangan di bawah ini (Ketua Jabatan)
@@ -1196,32 +1197,174 @@ const App = {
     }
   },
 
-  // Unduh Surat Format PDF
+  // Unduh Surat Format PDF Resmi (Format Standar A4 Proporsional & Rapi)
   downloadPDF() {
-    const element = document.getElementById('printArea');
-    if (!element) return;
+    const item = this.state.selectedIzin;
+    if (!item) {
+      window.print();
+      return;
+    }
 
     if (typeof html2pdf === 'undefined') {
       window.print();
       return;
     }
 
-    const filename = `Surat_Izin_${this.state.selectedIzinId || 'PA_Gunung_Sugih'}.pdf`;
+    const ttdPemohonSrc = item.ttdDigital || '';
+    const ttdAtasanSrc = item.ttdAtasan || (item.status === 'approved' ? item.ttdDigital : '');
+    const tanggalSurat = formatDateIndo(item.tanggalIzin);
+    const waktuSurat = `${formatDateIndo(item.tanggalIzin, true)}, Pukul ${item.jamKeluar} s.d. ${item.jamMasuk || '-'} WIB`;
+
+    // Container A4 khusus untuk render PDF resolusi tinggi dan proporsional
+    const pdfContainer = document.createElement('div');
+    pdfContainer.id = 'pdfExportContainer';
+    pdfContainer.style.position = 'fixed';
+    pdfContainer.style.left = '-9999px';
+    pdfContainer.style.top = '0';
+    pdfContainer.style.width = '750px'; // Lebar proporsional A4 pada 96 DPI
+    pdfContainer.style.backgroundColor = '#ffffff';
+    pdfContainer.style.color = '#000000';
+    pdfContainer.style.fontFamily = "'Times New Roman', Times, serif";
+    pdfContainer.style.padding = '35px 50px 60px 50px';
+    pdfContainer.style.boxSizing = 'border-box';
+    pdfContainer.style.lineHeight = '1.6';
+
+    pdfContainer.innerHTML = `
+      <!-- KOP SURAT RESMI PENGADILAN AGAMA GUNUNG SUGIH -->
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 2px;">
+        <tr>
+          <td style="width: 80px; vertical-align: middle; text-align: left; padding: 0 10px 0 0;">
+            <img src="/logo-pa.png" alt="Logo PA" style="width: 72px; height: 92px; object-fit: contain; display: block;">
+          </td>
+          <td style="text-align: center; vertical-align: middle; padding: 0;">
+            <div style="font-size: 15px; font-weight: bold; letter-spacing: 0.5px; line-height: 1.3;">
+              MAHKAMAH AGUNG REPUBLIK INDONESIA
+            </div>
+            <div style="font-size: 13.5px; font-weight: bold; line-height: 1.3; margin-top: 2px;">
+              DIREKTORAT JENDERAL BADAN PERADILAN AGAMA
+            </div>
+            <div style="font-size: 13.5px; font-weight: bold; line-height: 1.3; margin-top: 2px;">
+              PENGADILAN TINGGI AGAMA BANDAR LAMPUNG
+            </div>
+            <div style="font-size: 16px; font-weight: 800; line-height: 1.3; margin-top: 3px;">
+              PENGADILAN AGAMA GUNUNG SUGIH
+            </div>
+            <div style="font-size: 11px; line-height: 1.3; margin-top: 4px; font-style: normal;">
+              Jalan Negara No. 99 Gunung Sugih, Lampung Tengah, Lampung 34161, (0725) 528885,
+            </div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- GARIS GANDA KOP SURAT (THICK-THIN) -->
+      <div style="border-top: 2.5px solid #000; border-bottom: 1px solid #000; height: 3px; margin-top: 8px; margin-bottom: 32px;"></div>
+
+      <!-- JUDUL SURAT RESMI -->
+      <div style="text-align: center; margin-bottom: 32px;">
+        <span style="font-size: 16px; font-weight: bold; text-decoration: underline; letter-spacing: 1px; text-transform: uppercase;">
+          IZIN KELUAR KANTOR
+        </span>
+      </div>
+
+      <!-- TABEL DATA PERIZINAN -->
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.8; margin-bottom: 28px;">
+        <tbody>
+          <tr style="vertical-align: top;">
+            <td style="width: 270px; padding: 9px 0; font-weight: normal;">Yang bertandatangan di bawah ini</td>
+            <td style="width: 20px; padding: 9px 0; text-align: center;">:</td>
+            <td style="padding: 9px 0; font-weight: 600;">${item.atasanNama} (${item.atasanJabatan || 'Ketua Pengadilan Agama Gunung Sugih'})</td>
+          </tr>
+          <tr style="vertical-align: top;">
+            <td style="padding: 9px 0; font-weight: normal;">Dengan ini memberikan izin kepada</td>
+            <td style="padding: 9px 0; text-align: center;">:</td>
+            <td style="padding: 9px 0; font-weight: 600;">${item.pegawaiNama} (NIP. ${item.pegawaiNip || '-'}, Jabatan: ${item.pegawaiJabatan})</td>
+          </tr>
+          <tr style="vertical-align: top;">
+            <td style="padding: 9px 0; font-weight: normal;">Untuk keluar kantor pada</td>
+            <td style="padding: 9px 0; text-align: center;">:</td>
+            <td style="padding: 9px 0; font-weight: 600;">${waktuSurat}</td>
+          </tr>
+          <tr style="vertical-align: top;">
+            <td style="padding: 9px 0; font-weight: normal;">Untuk keperluan</td>
+            <td style="padding: 9px 0; text-align: center;">:</td>
+            <td style="padding: 9px 0; font-weight: normal; line-height: 1.7;">${item.keterangan}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- KALIMAT PENUTUP RESMI -->
+      <p style="font-size: 14px; text-indent: 40px; text-align: justify; line-height: 1.8; margin: 0 0 70px 0;">
+        Demikian izin ini diberikan kepada yang bersangkutan untuk digunakan sebagaimana mestinya.
+      </p>
+
+      <!-- DUA KOLOM TANDA TANGAN -->
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 10px;">
+        <tr>
+          <!-- Kolom Kiri: Pemohon -->
+          <td style="width: 50%; text-align: center; vertical-align: top; padding: 0 15px;">
+            <div style="margin-bottom: 5px;">Pemohon,</div>
+            <div style="height: 85px; display: flex; align-items: center; justify-content: center; margin: 5px auto;">
+              ${ttdPemohonSrc ? `<img src="${ttdPemohonSrc}" alt="TTD Pemohon" style="max-height: 80px; max-width: 160px; object-fit: contain;">` : '<div style="height: 80px;"></div>'}
+            </div>
+            <div style="font-weight: bold; text-decoration: underline; margin-top: 6px;">
+              ( ${item.pegawaiNama} )
+            </div>
+            <div style="font-size: 13px; margin-top: 3px;">
+              NIP. ${item.pegawaiNip || '........................................'}
+            </div>
+          </td>
+
+          <!-- Kolom Kanan: Ketua Jabatan -->
+          <td style="width: 50%; text-align: center; vertical-align: top; padding: 0 15px;">
+            <div>Gunung Sugih, ${tanggalSurat}</div>
+            <div style="margin-bottom: 5px;">${item.atasanJabatan || 'Ketua Pengadilan Agama Gunung Sugih'},</div>
+            <div style="height: 85px; display: flex; align-items: center; justify-content: center; margin: 5px auto;">
+              ${ttdAtasanSrc ? `<img src="${ttdAtasanSrc}" alt="TTD Ketua" style="max-height: 80px; max-width: 160px; object-fit: contain;">` : '<div style="height: 80px;"></div>'}
+            </div>
+            <div style="font-weight: bold; text-decoration: underline; margin-top: 6px;">
+              ( ${item.atasanNama} )
+            </div>
+            <div style="font-size: 13px; margin-top: 3px;">
+              NIP. ${item.atasanNip || '197405102001121001'}
+            </div>
+          </td>
+        </tr>
+      </table>
+    `;
+
+    document.body.appendChild(pdfContainer);
+
+    const filename = `Surat_Izin_${item.id || 'PA_Gunung_Sugih'}.pdf`;
     const opt = {
-      margin: [10, 10, 10, 10],
+      margin: [12, 12, 12, 12],
       filename: filename,
       image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        letterRendering: true,
+        scrollY: 0
+      },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-    this.showToast('Sedang membuat file PDF...', 'info');
-    html2pdf().set(opt).from(element).save().then(() => {
-      this.showToast('Surat izin format PDF berhasil diunduh.', 'success');
-    }).catch(err => {
-      console.error('HTML2PDF error:', err);
-      window.print();
-    });
+    this.showToast('Menyiapkan file PDF resmi A4...', 'info');
+
+    // Beri jeda 250ms agar gambar dan font siap sebelum capture
+    setTimeout(() => {
+      html2pdf().set(opt).from(pdfContainer).save().then(() => {
+        if (document.body.contains(pdfContainer)) {
+          document.body.removeChild(pdfContainer);
+        }
+        this.showToast('Surat izin format PDF berhasil diunduh.', 'success');
+      }).catch(err => {
+        console.error('HTML2PDF error:', err);
+        if (document.body.contains(pdfContainer)) {
+          document.body.removeChild(pdfContainer);
+        }
+        window.print();
+      });
+    }, 250);
   },
 
   closeTiketModal() {
