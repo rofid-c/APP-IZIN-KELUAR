@@ -296,38 +296,18 @@
                 Dr. H. Ahmad Zarkasi, S.H.I., M.H.
               </h2>
               <p id="ketuaJabatanCard" class="text-[11px] text-amber-800 font-semibold mt-0.5">
-                Ketua Pengadilan Agama
+                Ketua Pengadilan Agama Gunung Sugih
               </p>
             </div>
-            <span id="ketuaPresenceBadge" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 inline-flex items-center gap-1 shrink-0">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> Di Kantor
+            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 inline-flex items-center gap-1 shrink-0">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span> Penyetuju Resmi
             </span>
           </div>
         </div>
 
-        <!-- 2 MENU UTAMA KETUA JABATAN: APROVAL & BUAT SURAT IZIN -->
-        <div class="grid grid-cols-2 p-1 bg-slate-200/90 rounded-2xl text-xs font-bold gap-1 shadow-2xs">
-          <!-- Menu 1: Approval -->
-          <button id="btnKetuaMenuApproval" type="button" onclick="App.switchKetuaSection('approval')"
-            class="py-2.5 px-2 rounded-xl text-center transition bg-amber-700 text-white shadow-xs font-bold flex items-center justify-center gap-1.5">
-            <i data-lucide="check-square" class="w-4 h-4"></i>
-            <span>Approval</span>
-            <span id="badgeKetuaPendingCount" class="ml-1 px-1.5 py-0.2 text-[10px] bg-white text-amber-900 rounded-full font-black hidden">0</span>
-          </button>
-
-          <!-- Menu 2: Buat Surat Izin -->
-          <button id="btnKetuaMenuBuatIzin" type="button" onclick="App.switchKetuaSection('buat_izin')"
-            class="py-2.5 px-2 rounded-xl text-center transition text-slate-600 hover:text-slate-900 font-semibold flex items-center justify-center gap-1.5">
-            <i data-lucide="file-plus-2" class="w-4 h-4"></i>
-            <span>Buat Surat Izin</span>
-          </button>
-        </div>
-
-        <!-- ======================================================== -->
-        <!-- SUB-HALAMAN 1: MENU APPROVAL (PERSETUJUAN IZIN PEGAWAI)  -->
-        <!-- ======================================================== -->
+        <!-- MENU APPROVAL PERSETUJUAN IZIN PEGAWAI (KHUSUS KETUA JABATAN) -->
         <div id="ketuaSectionApproval" class="space-y-3.5">
-          <!-- Ringkasan Antrean -->
+          <!-- Ringkasan Antrean Permohonan Masuk -->
           <div class="bg-amber-50 border border-amber-200/80 rounded-xl p-3 flex items-center justify-between text-xs">
             <div class="flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
@@ -361,58 +341,6 @@
 
           <div id="ketuaEmptyState" class="hidden py-8 text-center text-xs text-slate-400">
             Tidak ada permohonan izin dalam kategori ini.
-          </div>
-        </div>
-
-        <!-- ======================================================== -->
-        <!-- SUB-HALAMAN 2: MENU BUAT SURAT IZIN (MILIK KETUA JABATAN) -->
-        <!-- ======================================================== -->
-        <div id="ketuaSectionBuatIzin" class="hidden space-y-3.5">
-          <!-- Tombol Ajukan Izin Keluar Kantor untuk Ketua -->
-          <button onclick="App.openPengajuanModal()" 
-            class="w-full py-3.5 rounded-2xl text-xs font-extrabold bg-court-700 hover:bg-court-800 text-white shadow-md shadow-court-800/20 active:scale-98 transition flex items-center justify-center gap-2">
-            <i data-lucide="plus-circle" class="w-4 h-4"></i>
-            Ajukan Izin Keluar Kantor
-          </button>
-
-          <!-- KARTU IZIN AKTIF MILIK KETUA JABATAN -->
-          <div id="ketuaActiveCard" class="hidden">
-            <!-- Diisi otomatis oleh JS -->
-          </div>
-
-          <!-- RIWAYAT IZIN KELUAR MILIK KETUA JABATAN -->
-          <div class="space-y-3 pt-1">
-            <div class="flex items-center justify-between">
-              <h3 class="text-xs font-extrabold text-slate-800 uppercase tracking-wider">
-                Riwayat Surat Izin Saya
-              </h3>
-              <span id="ketuaRiwayatCount" class="text-[11px] text-slate-500 font-semibold">-</span>
-            </div>
-
-            <!-- Filter Tab Riwayat Ketua -->
-            <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
-              <button data-ketua-myfilter="all" class="ketua-myfilter-btn px-3 py-1 rounded-full text-[11px] font-bold bg-court-800 text-white">
-                Semua
-              </button>
-              <button data-ketua-myfilter="pending" class="ketua-myfilter-btn px-3 py-1 rounded-full text-[11px] font-semibold bg-white text-slate-600 border border-slate-200">
-                Menunggu
-              </button>
-              <button data-ketua-myfilter="approved" class="ketua-myfilter-btn px-3 py-1 rounded-full text-[11px] font-semibold bg-white text-slate-600 border border-slate-200">
-                Disetujui
-              </button>
-              <button data-ketua-myfilter="completed" class="ketua-myfilter-btn px-3 py-1 rounded-full text-[11px] font-semibold bg-white text-slate-600 border border-slate-200">
-                Selesai
-              </button>
-            </div>
-
-            <!-- List Riwayat Izin Ketua Sendiri -->
-            <div id="ketuaMyIzinList" class="space-y-2.5">
-              <!-- Diisi otomatis oleh JS -->
-            </div>
-
-            <div id="ketuaMyEmptyState" class="hidden py-8 text-center text-xs text-slate-400">
-              Belum ada riwayat izin keluar yang Anda ajukan.
-            </div>
           </div>
         </div>
 
@@ -558,28 +486,28 @@
       </div>
 
       <!-- KERTAS SURAT RESMI (PRINT AREA) -->
-      <div id="printArea" class="bg-white p-4 sm:p-8 text-black font-sans leading-relaxed text-xs sm:text-sm">
+      <div id="printArea" class="surat-resmi bg-white p-6 sm:p-10 text-black leading-relaxed">
         
         <!-- KOP SURAT RESMI PENGADILAN AGAMA GUNUNG SUGIH -->
         <table class="w-full border-collapse mb-2">
           <tr>
-            <td class="w-16 sm:w-20 align-middle text-left p-0 pr-3">
-              <img src="/logo-pa.png" alt="Logo PA Gunung Sugih" class="w-14 h-18 sm:w-16 sm:h-20 object-contain">
+            <td class="w-20 align-middle text-left p-0 pr-4">
+              <img src="/logo-pa.png" alt="Logo PA Gunung Sugih" class="w-16 h-20 object-contain">
             </td>
             <td class="text-center align-middle p-0">
-              <div class="font-bold text-xs sm:text-sm uppercase leading-tight text-black">
+              <div class="font-bold text-sm sm:text-base uppercase tracking-wide text-black leading-tight">
                 MAHKAMAH AGUNG REPUBLIK INDONESIA
               </div>
-              <div class="font-bold text-[11px] sm:text-xs uppercase leading-tight text-black mt-0.5">
+              <div class="font-bold text-xs sm:text-sm uppercase tracking-wide text-black leading-tight mt-1">
                 DIREKTORAT JENDERAL BADAN PERADILAN AGAMA
               </div>
-              <div class="font-bold text-[11px] sm:text-xs uppercase leading-tight text-black mt-0.5">
+              <div class="font-bold text-xs sm:text-sm uppercase tracking-wide text-black leading-tight mt-0.5">
                 PENGADILAN TINGGI AGAMA BANDAR LAMPUNG
               </div>
-              <div class="font-extrabold text-sm sm:text-base uppercase leading-tight text-black mt-1">
+              <div class="font-extrabold text-base sm:text-lg uppercase tracking-wider text-black leading-tight mt-1">
                 PENGADILAN AGAMA GUNUNG SUGIH
               </div>
-              <div class="text-[9px] sm:text-[11px] leading-tight text-black mt-1 font-normal">
+              <div class="text-[11px] sm:text-xs leading-normal text-black mt-1 font-normal">
                 Jalan Negara No. 99 Gunung Sugih, Lampung Tengah, Lampung 34161, (0725) 528885,
               </div>
             </td>
@@ -587,32 +515,32 @@
         </table>
 
         <!-- GARIS GANDA KOP SURAT (THICK-THIN) -->
-        <div style="border-top: 2.5px solid #000; border-bottom: 1px solid #000; height: 3px; margin-top: 8px; margin-bottom: 28px;"></div>
+        <div style="border-top: 2.5px solid #000; border-bottom: 1px solid #000; height: 3px; margin-top: 10px; margin-bottom: 30px;"></div>
 
         <!-- JUDUL SURAT (BOLD, CENTERED, UNDERLINE) -->
-        <div class="text-center my-6">
-          <h2 class="font-bold text-sm sm:text-base uppercase tracking-wider inline-block border-b-2 border-black pb-0.5 text-black">
+        <div class="text-center" style="margin: 28px 0 24px 0;">
+          <h2 class="font-bold text-base sm:text-lg uppercase tracking-wider inline-block border-b-2 border-black pb-0.5 text-black">
             IZIN KELUAR KANTOR
           </h2>
         </div>
 
         <!-- ISI FORM SURAT IZIN (SESUAI TABEL RESMI) -->
-        <table class="w-full border-collapse my-6 text-xs sm:text-[13px] leading-relaxed">
+        <table class="w-full border-collapse text-[13px] sm:text-[14px]" style="margin: 24px 0; line-height: 1.8;">
           <tbody>
             <tr class="align-top">
-              <td class="py-2.5 w-48 sm:w-56 text-black font-normal">Yang bertandatangan di bawah ini</td>
+              <td class="py-2.5 w-52 sm:w-60 text-black font-normal">Yang bertandatangan di bawah ini</td>
               <td class="py-2.5 w-5 text-center text-black">:</td>
-              <td class="py-2.5 font-semibold text-black" id="suratAtasanInfo">-</td>
+              <td class="py-2.5 font-bold text-black" id="suratAtasanInfo">-</td>
             </tr>
             <tr class="align-top">
               <td class="py-2.5 text-black font-normal">Dengan ini memberikan izin kepada</td>
               <td class="py-2.5 text-center text-black">:</td>
-              <td class="py-2.5 font-semibold text-black" id="suratPemohonInfo">-</td>
+              <td class="py-2.5 font-bold text-black" id="suratPemohonInfo">-</td>
             </tr>
             <tr class="align-top">
               <td class="py-2.5 text-black font-normal">Untuk keluar kantor pada</td>
               <td class="py-2.5 text-center text-black">:</td>
-              <td class="py-2.5 font-semibold text-black" id="suratWaktuInfo">-</td>
+              <td class="py-2.5 font-bold text-black" id="suratWaktuInfo">-</td>
             </tr>
             <tr class="align-top">
               <td class="py-2.5 text-black font-normal">Untuk keperluan</td>
@@ -623,32 +551,32 @@
         </table>
 
         <!-- KALIMAT PENUTUP RESMI -->
-        <p class="text-justify indent-8 my-6 text-xs sm:text-[13px] text-black leading-relaxed">
+        <p class="text-justify indent-8 text-[13px] sm:text-[14px] text-black leading-relaxed" style="margin: 28px 0 36px 0;">
           Demikian izin ini diberikan kepada yang bersangkutan untuk digunakan sebagaimana mestinya.
         </p>
 
         <!-- DUA KOLOM TANDA TANGAN (PEMOHON & KETUA JABATAN) -->
-        <table class="w-full border-collapse mt-16 sm:mt-24 text-xs sm:text-[13px]">
+        <table class="w-full border-collapse text-[13px] sm:text-[14px]" style="margin-top: 50px;">
           <tr>
             <!-- Kolom Kiri: Pemohon -->
             <td class="w-1/2 text-center align-top p-2">
               <p class="text-black mb-1">Pemohon,</p>
-              <div class="h-20 flex items-center justify-center my-2">
-                <img id="suratTtdPemohon" src="" alt="TTD Pemohon" class="max-h-18 max-w-[140px] object-contain">
+              <div class="h-24 flex items-center justify-center my-2">
+                <img id="suratTtdPemohon" src="" alt="TTD Pemohon" class="max-h-20 max-w-[150px] object-contain">
               </div>
               <p class="font-bold underline text-black mt-2" id="suratNamaBawahPemohon">( ........................................ )</p>
-              <p class="text-black text-[10px] sm:text-xs mt-0.5" id="suratNipPemohon">NIP. ........................................</p>
+              <p class="text-black text-xs mt-0.5" id="suratNipPemohon">NIP. ........................................</p>
             </td>
 
             <!-- Kolom Kanan: Ketua Jabatan / Pimpinan -->
             <td class="w-1/2 text-center align-top p-2">
               <p class="text-black" id="suratTanggalTempat">Gunung Sugih, .................... 20...</p>
               <p class="text-black mb-1" id="suratJabatanBawahAtasan">Ketua Pengadilan Agama Gunung Sugih,</p>
-              <div class="h-20 flex items-center justify-center my-2">
-                <img id="suratTtdAtasan" src="" alt="TTD Ketua Jabatan" class="max-h-18 max-w-[140px] object-contain">
+              <div class="h-24 flex items-center justify-center my-2">
+                <img id="suratTtdAtasan" src="" alt="TTD Ketua Jabatan" class="max-h-20 max-w-[150px] object-contain">
               </div>
               <p class="font-bold underline text-black mt-2" id="suratNamaBawahAtasan">( ........................................ )</p>
-              <p class="text-black text-[10px] sm:text-xs mt-0.5" id="suratNipAtasan">NIP. ........................................</p>
+              <p class="text-black text-xs mt-0.5" id="suratNipAtasan">NIP. ........................................</p>
             </td>
           </tr>
         </table>

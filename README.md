@@ -95,12 +95,10 @@ flowchart TD
    - **Nama**: `Ahmad Fauzi`
    - **NIP**: `199208152019031002`
    - **Hak Akses**: Mengajukan izin, melihat status, cetak/download surat PDF resmi, check-in kembali saat tiba di kantor, dan menghapus permohonan yang masih Menunggu. *(Pegawai biasa tidak dapat menyetujui/menolak izin)*.
-2. **Akun Ketua Jabatan (Approver & Pembuat Izin)**:
+2. **Akun Ketua Jabatan (Khusus Approval & Penandatanganan Digital)**:
    - **Nama**: `Dr. H. Ahmad Zarkasi, S.H.I., M.H.` (atau ketik `Ahmad Zarkasi`)
    - **NIP**: `197405102001121001`
-   - **Hak Akses**: Memiliki 2 menu utama:
-     - **Approval**: Antrean persetujuan izin masuk dari staf pegawai lengkap dengan pembubuhan **Tanda Tangan Digital Ketua Jabatan**.
-     - **Buat Surat Izin**: Mengajukan surat izin keluar kantor resmi untuk keperluan pimpinan sendiri.
+   - **Hak Akses Khusus**: Panel khusus untuk meninjau antrean permohonan izin keluar kantor pegawai, menyetujui izin dengan membubuhkan **Tanda Tangan Digital Resmi**, atau menolak permohonan dengan catatan alasan.
 
 ---
 

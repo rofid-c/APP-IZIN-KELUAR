@@ -74,6 +74,13 @@ body {
   border: 1px solid #fecaca;
 }
 
+/* Kertas Lembar Surat Resmi PA Gunung Sugih */
+.surat-resmi {
+  font-family: 'Times New Roman', Times, serif;
+  color: #000000;
+  background-color: #ffffff;
+}
+
 /* Print Styles */
 @media print {
   @page {

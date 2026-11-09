@@ -24,11 +24,8 @@ const App = {
     atasanList: [],
     pegawaiIzinList: [],
     ketuaIzinList: [],
-    ketuaMyIzinList: [],
     pegawaiFilter: 'all',
     ketuaFilter: 'pending',
-    ketuaMyFilter: 'all',
-    ketuaSection: 'approval',
     selectedIzin: null,
     selectedIzinId: null,
     currentApprovalIzinId: null,
@@ -82,17 +79,15 @@ const App = {
     const u = this.state.currentUser;
 
     if (u.role === 'ketua_jabatan') {
-      // Tampilan Ketua Jabatan (Ada 2 Menu: Approval & Buat Surat Izin)
+      // Tampilan Ketua Jabatan (Khusus Modul Approval)
       document.getElementById('viewDashboardPegawai').classList.add('hidden');
       document.getElementById('viewDashboardKetua').classList.remove('hidden');
       document.getElementById('ketuaNamaCard').textContent = u.nama;
-      document.getElementById('ketuaJabatanCard').textContent = u.jabatan || 'Ketua Pengadilan Agama';
+      document.getElementById('ketuaJabatanCard').textContent = u.jabatan || 'Ketua Pengadilan Agama Gunung Sugih';
       const headerNama = document.getElementById('ketuaHeaderNama');
       if (headerNama) headerNama.textContent = u.nama;
       await this.loadAtasanList();
       await this.loadKetuaIzinList();
-      await this.loadKetuaMyIzinList();
-      this.switchKetuaSection('approval');
     } else {
       // Tampilan Pegawai Biasa
       document.getElementById('viewDashboardKetua').classList.add('hidden');
@@ -434,12 +429,7 @@ const App = {
       const json = await res.json();
       if (json.success) {
         this.showToast('Permohonan izin berhasil dihapus.', 'info');
-        if (this.state.currentUser && this.state.currentUser.role === 'ketua_jabatan') {
-          await this.loadKetuaMyIzinList();
-          await this.loadKetuaIzinList();
-        } else {
-          await this.loadPegawaiIzinList();
-        }
+        await this.loadPegawaiIzinList();
       } else {
         this.showToast(json.message || 'Gagal menghapus izin.', 'error');
       }
@@ -452,39 +442,7 @@ const App = {
   // MODUL KETUA JABATAN (ROLE: KETUA_JABATAN)
   // ==========================================
 
-  // Ganti Menu Antara: 1. Approval Izin dan 2. Buat Surat Izin
-  switchKetuaSection(section) {
-    this.state.ketuaSection = section;
-    const btnApproval = document.getElementById('btnKetuaMenuApproval');
-    const btnBuatIzin = document.getElementById('btnKetuaMenuBuatIzin');
-    const secApproval = document.getElementById('ketuaSectionApproval');
-    const secBuatIzin = document.getElementById('ketuaSectionBuatIzin');
-
-    if (section === 'buat_izin') {
-      if (btnBuatIzin) {
-        btnBuatIzin.className = 'py-2.5 px-2 rounded-xl text-center transition bg-court-700 text-white shadow-xs font-bold flex items-center justify-center gap-1.5';
-      }
-      if (btnApproval) {
-        btnApproval.className = 'py-2.5 px-2 rounded-xl text-center transition text-slate-600 hover:text-slate-900 font-semibold flex items-center justify-center gap-1.5';
-      }
-      if (secApproval) secApproval.classList.add('hidden');
-      if (secBuatIzin) secBuatIzin.classList.remove('hidden');
-      this.loadKetuaMyIzinList();
-    } else {
-      if (btnApproval) {
-        btnApproval.className = 'py-2.5 px-2 rounded-xl text-center transition bg-amber-700 text-white shadow-xs font-bold flex items-center justify-center gap-1.5';
-      }
-      if (btnBuatIzin) {
-        btnBuatIzin.className = 'py-2.5 px-2 rounded-xl text-center transition text-slate-600 hover:text-slate-900 font-semibold flex items-center justify-center gap-1.5';
-      }
-      if (secApproval) secApproval.classList.remove('hidden');
-      if (secBuatIzin) secBuatIzin.classList.add('hidden');
-      this.loadKetuaIzinList();
-    }
-    lucide.createIcons();
-  },
-
-  // 1. MENU APPROVAL: Load Daftar Permohonan Pegawai yang Butuh Persetujuan
+  // Load Daftar Permohonan Pegawai yang Butuh Persetujuan (Approval)
   async loadKetuaIzinList() {
     if (!this.state.currentUser) return;
 
@@ -496,20 +454,10 @@ const App = {
         const staffList = json.data.filter(i => i.pegawaiId !== this.state.currentUser.id);
         this.state.ketuaIzinList = staffList;
 
-        // Hitung total pending untuk badge counter
+        // Hitung total pending untuk antrean
         const allRes = await fetch('/api/izin?status=pending');
         const allJson = await allRes.json();
         const pendingCount = (allJson.data || []).filter(i => i.pegawaiId !== this.state.currentUser.id).length;
-
-        const badge = document.getElementById('badgeKetuaPendingCount');
-        if (badge) {
-          badge.textContent = pendingCount;
-          if (pendingCount > 0) {
-            badge.classList.remove('hidden');
-          } else {
-            badge.classList.add('hidden');
-          }
-        }
 
         const antreanCountEl = document.getElementById('ketuaAntreanCount');
         if (antreanCountEl) {
@@ -522,161 +470,6 @@ const App = {
     } catch (e) {
       console.error(e);
     }
-  },
-
-  // 2. MENU BUAT SURAT IZIN: Load Riwayat Izin Keluar Milik Ketua Sendiri
-  async loadKetuaMyIzinList() {
-    if (!this.state.currentUser) return;
-
-    try {
-      const { id } = this.state.currentUser;
-      const res = await fetch(`/api/izin?pegawaiId=${id}&status=${this.state.ketuaMyFilter}`);
-      const json = await res.json();
-      if (json.success) {
-        this.state.ketuaMyIzinList = json.data;
-        const countEl = document.getElementById('ketuaRiwayatCount');
-        if (countEl) countEl.textContent = `${json.data.length} surat`;
-
-        this.renderKetuaPresenceStatus();
-        this.renderKetuaActiveCard();
-        this.renderKetuaMyIzinList();
-        lucide.createIcons();
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  },
-
-  renderKetuaPresenceStatus() {
-    const activeIzin = (this.state.ketuaMyIzinList || []).find(i => i.status === 'approved' && !i.jamKembaliAktual);
-    const badge = document.getElementById('ketuaPresenceBadge');
-    if (!badge) return;
-
-    if (activeIzin) {
-      badge.className = 'px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 inline-flex items-center gap-1 shrink-0';
-      badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span> Sedang Izin (${activeIzin.jamKeluar} s.d. ${activeIzin.jamMasuk || '-'} WIB)`;
-    } else {
-      badge.className = 'px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 inline-flex items-center gap-1 shrink-0';
-      badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> Di Kantor`;
-    }
-  },
-
-  renderKetuaActiveCard() {
-    const container = document.getElementById('ketuaActiveCard');
-    if (!container) return;
-    const activeIzin = (this.state.ketuaMyIzinList || []).find(i => i.status === 'approved' && !i.jamKembaliAktual);
-
-    if (!activeIzin) {
-      container.innerHTML = '';
-      container.classList.add('hidden');
-      return;
-    }
-
-    container.classList.remove('hidden');
-    container.innerHTML = `
-      <div class="active-card text-white p-4 rounded-2xl shadow-lg space-y-3 relative overflow-hidden">
-        <div class="flex items-center justify-between">
-          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-400 text-emerald-950 uppercase tracking-wider">
-            <span class="w-2 h-2 rounded-full bg-emerald-950 animate-ping"></span>
-            IZIN KELUAR AKTIF
-          </span>
-          <span class="text-xs font-bold text-emerald-100">
-            ${activeIzin.jamKeluar} s.d. ${activeIzin.jamMasuk || '-'} WIB
-          </span>
-        </div>
-
-        <div>
-          <h4 class="text-xs font-bold text-white leading-snug">${activeIzin.keterangan}</h4>
-          <p class="text-[10px] text-emerald-200 mt-1">Tanggal: <strong>${activeIzin.tanggalIzin}</strong></p>
-        </div>
-          </p>
-        </div>
-
-        <div class="pt-2 border-t border-emerald-600/60 flex items-center gap-2">
-          <button onclick="App.openTiketModal('${activeIzin.id}')"
-            class="flex-1 py-2 px-3 rounded-xl text-xs font-bold bg-white/20 hover:bg-white/30 text-white transition flex items-center justify-center gap-1.5">
-            <i data-lucide="printer" class="w-3.5 h-3.5"></i> Lihat Surat
-          </button>
-          <button onclick="App.openKembaliModal('${activeIzin.id}')"
-            class="flex-1 py-2 px-3 rounded-xl text-xs font-bold bg-white text-court-900 hover:bg-emerald-50 transition shadow-sm flex items-center justify-center gap-1.5">
-            <i data-lucide="check-circle" class="w-3.5 h-3.5 text-court-700"></i> Check-In Kantor
-          </button>
-        </div>
-      </div>
-    `;
-  },
-
-  renderKetuaMyIzinList() {
-    const container = document.getElementById('ketuaMyIzinList');
-    const empty = document.getElementById('ketuaMyEmptyState');
-    if (!container) return;
-    const items = this.state.ketuaMyIzinList || [];
-
-    if (items.length === 0) {
-      container.innerHTML = '';
-      if (empty) empty.classList.remove('hidden');
-      return;
-    }
-
-    if (empty) empty.classList.add('hidden');
-    container.innerHTML = items.map(item => {
-      let statusBadge = '';
-      if (item.status === 'pending') {
-        statusBadge = `<span class="badge-pending px-2 py-0.5 rounded-full text-[10px] font-bold">Menunggu</span>`;
-      } else if (item.status === 'approved') {
-        statusBadge = `<span class="badge-approved px-2 py-0.5 rounded-full text-[10px] font-bold">Disetujui</span>`;
-      } else if (item.status === 'completed') {
-        statusBadge = `<span class="badge-completed px-2 py-0.5 rounded-full text-[10px] font-bold">Selesai</span>`;
-      } else if (item.status === 'rejected') {
-        statusBadge = `<span class="badge-rejected px-2 py-0.5 rounded-full text-[10px] font-bold">Ditolak</span>`;
-      }
-
-      return `
-        <div class="bg-white border border-slate-200 rounded-2xl p-3.5 shadow-2xs space-y-2.5">
-          <div class="flex items-center justify-between">
-            <span class="text-[11px] font-bold text-slate-500">${item.tanggalIzin} • ${item.jamKeluar} s.d. ${item.jamMasuk || '-'} WIB</span>
-            ${statusBadge}
-          </div>
-
-          <div>
-            <h4 class="text-xs font-bold text-slate-900 leading-snug">${item.keterangan}</h4>
-            <div class="flex items-center gap-3 mt-1.5 text-[11px] text-slate-500 font-medium">
-              <span>Keluar: <strong class="text-slate-800">${item.jamKeluar} WIB</strong></span>
-              <span>Masuk: <strong class="text-slate-800">${item.jamMasuk || '-'} WIB</strong></span>
-              ${item.jamKembaliAktual ? `<span>Aktual: <strong class="text-court-700">${item.jamKembaliAktual} WIB</strong></span>` : ''}
-            </div>
-          </div>
-
-          <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
-            ${item.status === 'pending' ? `
-              <span class="text-[10px] text-amber-700 italic">Menunggu...</span>
-              <button onclick="App.hapusPermohonan('${item.id}')" 
-                class="px-2.5 py-1 text-[11px] font-bold text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition flex items-center gap-1">
-                <i data-lucide="trash-2" class="w-3 h-3 text-red-600"></i> Hapus
-              </button>
-            ` : ''}
-
-            ${item.status === 'approved' ? `
-              <button onclick="App.openTiketModal('${item.id}')" 
-                class="px-2.5 py-1 rounded-lg text-xs font-bold bg-court-50 text-court-800 border border-court-200 flex items-center gap-1">
-                <i data-lucide="file-text" class="w-3 h-3"></i> Cetak / Lihat Surat
-              </button>
-              <button onclick="App.openKembaliModal('${item.id}')" 
-                class="px-2.5 py-1 rounded-lg text-xs font-bold bg-court-700 text-white flex items-center gap-1 ml-auto">
-                <i data-lucide="check" class="w-3.5 h-3.5"></i> Tiba di Kantor
-              </button>
-            ` : ''}
-
-            ${item.status === 'completed' || item.status === 'rejected' ? `
-              <button onclick="App.openTiketModal('${item.id}')" 
-                class="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 ml-auto flex items-center gap-1">
-                <i data-lucide="file-text" class="w-3 h-3"></i> Lihat Surat
-              </button>
-            ` : ''}
-          </div>
-        </div>
-      `;
-    }).join('');
   },
 
   // Render Daftar Permohonan Masuk untuk Ketua Jabatan
@@ -1066,7 +859,6 @@ const App = {
 
     try {
       const formData = new FormData(e.target);
-      const isKetua = this.state.currentUser && this.state.currentUser.role === 'ketua_jabatan';
       const payload = {
         pegawaiId: this.state.currentUser.id,
         role: this.state.currentUser.role,
@@ -1090,15 +882,8 @@ const App = {
 
       if (json.success) {
         this.closePengajuanModal();
-        if (isKetua) {
-          this.showToast('Surat izin keluar berhasil dibuat dan diterbitkan.', 'success');
-          await this.loadKetuaMyIzinList();
-          await this.loadKetuaIzinList();
-          this.switchKetuaSection('buat_izin');
-        } else {
-          this.showToast('Permohonan izin berhasil diajukan ke Ketua Jabatan.', 'success');
-          await this.loadPegawaiIzinList();
-        }
+        this.showToast('Permohonan izin berhasil diajukan ke Ketua Jabatan.', 'success');
+        await this.loadPegawaiIzinList();
       } else {
         this.showToast(json.message || 'Gagal mengajukan izin.', 'error');
       }
@@ -1209,7 +994,7 @@ const App = {
 
     const filename = `Surat_Izin_${this.state.selectedIzinId || 'PA_Gunung_Sugih'}.pdf`;
     const opt = {
-      margin: [10, 10, 10, 10],
+      margin: [10, 14, 10, 14],
       filename: filename,
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: {
@@ -1236,9 +1021,7 @@ const App = {
 
   // Check-In Kembali
   openKembaliModal(izinId) {
-    const item = (this.state.pegawaiIzinList && this.state.pegawaiIzinList.find(i => i.id === izinId)) ||
-                 (this.state.ketuaMyIzinList && this.state.ketuaMyIzinList.find(i => i.id === izinId)) ||
-                 (this.state.ketuaIzinList && this.state.ketuaIzinList.find(i => i.id === izinId));
+    const item = this.state.pegawaiIzinList && this.state.pegawaiIzinList.find(i => i.id === izinId);
     if (!item) return;
 
     this.state.selectedIzin = item;
@@ -1268,11 +1051,7 @@ const App = {
       if (json.success) {
         this.closeKembaliModal();
         this.showToast('Konfirmasi kembali berhasil disimpan.', 'success');
-        if (this.state.currentUser && this.state.currentUser.role === 'ketua_jabatan') {
-          await this.loadKetuaMyIzinList();
-        } else {
-          await this.loadPegawaiIzinList();
-        }
+        await this.loadPegawaiIzinList();
       }
     } catch (e) {
       this.showToast('Gagal menyimpan konfirmasi.', 'error');
@@ -1314,19 +1093,6 @@ const App = {
 
         this.state.ketuaFilter = e.currentTarget.dataset.ketuaFilter;
         this.loadKetuaIzinList();
-      });
-    });
-
-    // Filter Riwayat Izin Milik Ketua Sendiri
-    document.querySelectorAll('.ketua-myfilter-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        document.querySelectorAll('.ketua-myfilter-btn').forEach(b => {
-          b.className = 'ketua-myfilter-btn px-3 py-1 rounded-full text-[11px] font-semibold bg-white text-slate-600 border border-slate-200';
-        });
-        e.currentTarget.className = 'ketua-myfilter-btn px-3 py-1 rounded-full text-[11px] font-bold bg-court-800 text-white';
-
-        this.state.ketuaMyFilter = e.currentTarget.dataset.ketuaMyfilter;
-        this.loadKetuaMyIzinList();
       });
     });
 
