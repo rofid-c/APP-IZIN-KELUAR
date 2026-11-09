@@ -9,7 +9,7 @@
   },
   "keywords": [],
   "author": "Rofid Safwanda",
-  "license": "ISC",
+  "license": "MIT",
   "type": "commonjs",
   "dependencies": {
     "cors": "^2.8.6",
