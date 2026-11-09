@@ -198,5 +198,12 @@ Wilayah Hukum Pengadilan Tinggi Agama Bandar Lampung
 Mahkamah Agung Republik Indonesia  
 
 ---
+
+## 📄 Lisensi & Hak Cipta (License)
+Aplikasi ini dikembangkan dan dilisensikan oleh:  
+**Rofid Safwanda**  
+Copyright © 2026 **Rofid Safwanda**. All rights reserved.
+
+---
 *Dibuat untuk kebutuhan operasional dan modernisasi layanan kepegawaian internal PA Gunung Sugih.*
 
