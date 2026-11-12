@@ -123,46 +123,6 @@
         </p>
       </form>
 
-      <!-- Bantuan Masuk Cepat (Akun Contoh) -->
-      <div id="demoAccountsBox" class="bg-emerald-50/80 border border-emerald-200 rounded-xl p-3.5 text-xs text-emerald-950 space-y-2">
-        <div class="flex items-center gap-1 font-bold text-court-800 text-[11px]">
-          <i data-lucide="key-round" class="w-3.5 h-3.5"></i>
-          <span>Pilih Akun Contoh (Nama & NIP):</span>
-        </div>
-        
-        <div class="grid grid-cols-1 gap-2 pt-1">
-          <!-- Akun Contoh 1: Administrator -->
-          <button type="button" onclick="App.autoFill('admin')"
-            class="w-full py-2 px-3 rounded-lg text-left bg-white border border-slate-300 hover:bg-slate-100 transition flex items-center justify-between">
-            <div>
-              <p class="text-xs font-bold text-slate-900">🛡️ Administrator (root)</p>
-              <p class="text-[10px] text-slate-500">NIP: admin123</p>
-            </div>
-            <span class="text-[10px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">Isi Form</span>
-          </button>
-
-          <!-- Akun Contoh 2: Pegawai -->
-          <button type="button" onclick="App.autoFill('pegawai')"
-            class="w-full py-2 px-3 rounded-lg text-left bg-white border border-emerald-300 hover:bg-emerald-100 transition flex items-center justify-between">
-            <div>
-              <p class="text-xs font-bold text-slate-900">👤 Pegawai (Ahmad Fauzi)</p>
-              <p class="text-[10px] text-slate-500">NIP: 199208152019031002</p>
-            </div>
-            <span class="text-[10px] font-bold text-court-700 bg-court-50 px-2 py-0.5 rounded">Isi Form</span>
-          </button>
-
-          <!-- Akun Contoh 3: Ketua Jabatan (Approver) -->
-          <button type="button" onclick="App.autoFill('ketua')"
-            class="w-full py-2 px-3 rounded-lg text-left bg-white border border-amber-300 hover:bg-amber-50 transition flex items-center justify-between">
-            <div>
-              <p class="text-xs font-bold text-slate-900">⚖️ Ketua Jabatan (Dr. H. Ahmad Zarkasi)</p>
-              <p class="text-[10px] text-slate-500">NIP: 197405102001121001</p>
-            </div>
-            <span class="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded">Isi Form</span>
-          </button>
-        </div>
-      </div>
-
       <p class="text-[10px] text-center text-slate-400">
         MIT License © 2026 Rofid Safwanda
       </p>
@@ -764,7 +724,7 @@
   </div>
 
   <!-- ===================================================================== -->
-  <!-- MODAL 1: FORM PENGAJUAN IZIN KELUAR (UNTUK PEGAWAI)
+      <!-- MODAL 1: FORM PENGAJUAN IZIN KELUAR (UNTUK PEGAWAI) -->
   <div id="modalPengajuan" class="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4 modal-hidden">
     <div class="bg-white rounded-2xl w-full max-w-sm p-5 shadow-2xl space-y-3.5 max-h-[92vh] overflow-y-auto">
       

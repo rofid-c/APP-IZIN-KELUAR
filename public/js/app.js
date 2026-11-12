@@ -114,7 +114,6 @@ const App = {
     const tabBtnRegister = document.getElementById('tabBtnRegister');
     const formLogin = document.getElementById('formLogin');
     const formRegister = document.getElementById('formRegister');
-    const demoBox = document.getElementById('demoAccountsBox');
 
     if (tab === 'register') {
       if (tabBtnRegister) {
@@ -125,7 +124,6 @@ const App = {
       }
       if (formLogin) formLogin.classList.add('hidden');
       if (formRegister) formRegister.classList.remove('hidden');
-      if (demoBox) demoBox.classList.add('hidden');
     } else {
       if (tabBtnLogin) {
         tabBtnLogin.className = 'flex-1 py-2 rounded-xl text-center transition bg-white text-court-800 shadow-xs font-bold';
@@ -135,7 +133,6 @@ const App = {
       }
       if (formLogin) formLogin.classList.remove('hidden');
       if (formRegister) formRegister.classList.add('hidden');
-      if (demoBox) demoBox.classList.remove('hidden');
     }
     lucide.createIcons();
   },
