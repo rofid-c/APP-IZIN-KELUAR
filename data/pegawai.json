@@ -25,5 +25,14 @@
     "password": "199504122020122003",
     "jabatan": "Staf Kepegawaian",
     "role": "pegawai"
+  },
+  {
+    "id": "PEG-9387",
+    "nama": "Lutfi mediansyah",
+    "username": "Lutfi mediansyah",
+    "nip": "198705202011011005",
+    "password": "198705202011011005",
+    "jabatan": "Kepala sub bagian PTIP",
+    "role": "pegawai"
   }
 ]

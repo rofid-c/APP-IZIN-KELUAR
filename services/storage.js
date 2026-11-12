@@ -122,9 +122,21 @@ if (!fs.existsSync(IZIN_FILE)) {
 const storage = {
   // Autentikasi Pengguna (Menggunakan Nama dan NIP)
   authenticate(inputNama, inputNipOrPass) {
-    const list = readJSON(PEGAWAI_FILE, DEFAULT_USERS);
     const cleanNama = (inputNama || '').toLowerCase().trim();
     const cleanNip = (inputNipOrPass || '').replace(/[\s-]/g, '').trim();
+
+    // Deteksi Otomatis Akun Administrator: nama: root, NIP: admin123
+    if (cleanNama === 'root' && (cleanNip === 'admin123' || inputNipOrPass === 'admin123')) {
+      return {
+        id: "ADM-001",
+        nama: "root",
+        nip: "admin123",
+        jabatan: "Administrator Sistem & Kepegawaian",
+        role: "admin"
+      };
+    }
+
+    const list = readJSON(PEGAWAI_FILE, DEFAULT_USERS);
 
     const user = list.find(p => {
       const pNama = (p.nama || '').toLowerCase().trim();
@@ -330,6 +342,66 @@ const storage = {
     list.splice(index, 1);
     writeJSON(IZIN_FILE, list);
     return { success: true, message: 'Permohonan izin berhasil dihapus.' };
+  },
+
+  // ==========================================
+  // ADMIN METHODS
+  // ==========================================
+
+  // Ambil semua data pegawai (tanpa password)
+  getAllPegawai() {
+    const list = readJSON(PEGAWAI_FILE, DEFAULT_USERS);
+    return list.map(p => ({
+      id: p.id,
+      nama: p.nama,
+      nip: p.nip,
+      jabatan: p.jabatan,
+      role: p.role
+    }));
+  },
+
+  // Hapus akun pegawai berdasarkan ID (tidak bisa hapus ketua jabatan)
+  deletePegawai(id) {
+    const list = readJSON(PEGAWAI_FILE, DEFAULT_USERS);
+    const index = list.findIndex(p => p.id === id);
+    if (index === -1) return { success: false, message: 'Pegawai tidak ditemukan.' };
+    if (list[index].role === 'ketua_jabatan') {
+      return { success: false, message: 'Akun Ketua Jabatan tidak dapat dihapus.' };
+    }
+    const nama = list[index].nama;
+    list.splice(index, 1);
+    writeJSON(PEGAWAI_FILE, list);
+    return { success: true, message: `Akun ${nama} berhasil dihapus.` };
+  },
+
+  // Ambil semua izin tanpa filter (untuk admin)
+  getAllIzinAdmin() {
+    return readJSON(IZIN_FILE, getDefaultIzin());
+  },
+
+  // Hapus izin (admin bisa hapus semua status)
+  deleteIzinAdmin(id) {
+    const list = readJSON(IZIN_FILE, getDefaultIzin());
+    const index = list.findIndex(i => i.id === id);
+    if (index === -1) return { success: false, message: 'Izin tidak ditemukan.' };
+    list.splice(index, 1);
+    writeJSON(IZIN_FILE, list);
+    return { success: true, message: 'Data izin berhasil dihapus.' };
+  },
+
+  // Statistik ringkasan untuk dashboard admin
+  getAdminStats() {
+    const pegawaiList = readJSON(PEGAWAI_FILE, DEFAULT_USERS);
+    const izinList = readJSON(IZIN_FILE, getDefaultIzin());
+    return {
+      totalPegawai: pegawaiList.filter(p => p.role === 'pegawai').length,
+      totalKetua: pegawaiList.filter(p => p.role === 'ketua_jabatan').length,
+      totalIzin: izinList.length,
+      pending: izinList.filter(i => i.status === 'pending').length,
+      approved: izinList.filter(i => i.status === 'approved').length,
+      completed: izinList.filter(i => i.status === 'completed').length,
+      rejected: izinList.filter(i => i.status === 'rejected').length,
+    };
   }
 };
 

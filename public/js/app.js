@@ -68,6 +68,7 @@ const App = {
     document.getElementById('viewLogin').classList.remove('hidden');
     document.getElementById('viewDashboardPegawai').classList.add('hidden');
     document.getElementById('viewDashboardKetua').classList.add('hidden');
+    document.getElementById('viewDashboardAdmin').classList.add('hidden');
     this.switchAuthTab('login');
     this.state.currentUser = null;
     lucide.createIcons();
@@ -78,7 +79,13 @@ const App = {
     document.getElementById('viewLogin').classList.add('hidden');
     const u = this.state.currentUser;
 
-    if (u.role === 'ketua_jabatan') {
+    if (u.role === 'admin') {
+      // ===== ADMIN MODE =====
+      document.getElementById('viewDashboardPegawai').classList.add('hidden');
+      document.getElementById('viewDashboardKetua').classList.add('hidden');
+      document.getElementById('viewDashboardAdmin').classList.remove('hidden');
+      await this.loadAdminDashboard();
+    } else if (u.role === 'ketua_jabatan') {
       // Tampilan Ketua Jabatan (Khusus Modul Approval)
       document.getElementById('viewDashboardPegawai').classList.add('hidden');
       document.getElementById('viewDashboardKetua').classList.remove('hidden');
@@ -1129,6 +1136,223 @@ const App = {
       toast.classList.add('-translate-y-2', 'opacity-0');
       setTimeout(() => toast.remove(), 2500);
     }, 3000);
+  },
+
+  // ==========================================
+  // MODUL ADMIN
+  // ==========================================
+
+  _adminAllIzin: [], // cache semua izin untuk filter client-side
+
+  async loadAdminDashboard() {
+    await this.loadAdminStats();
+    await this.loadAdminRecentIzin();
+    lucide.createIcons();
+  },
+
+  async loadAdminStats() {
+    try {
+      const res = await fetch('/api/admin/stats');
+      const json = await res.json();
+      if (json.success) {
+        const d = json.data;
+        document.getElementById('statTotalPegawai').textContent = d.totalPegawai ?? '-';
+        document.getElementById('statPending').textContent = d.pending ?? '-';
+        document.getElementById('statApproved').textContent = d.approved ?? '-';
+        document.getElementById('statCompleted').textContent = d.completed ?? '-';
+        document.getElementById('statRejected').textContent = d.rejected ?? '-';
+      }
+    } catch (e) {
+      console.error('Gagal load stats admin:', e);
+    }
+  },
+
+  async loadAdminRecentIzin() {
+    try {
+      const res = await fetch('/api/admin/izin');
+      const json = await res.json();
+      if (!json.success) return;
+      this._adminAllIzin = json.data;
+      const container = document.getElementById('adminRecentIzin');
+      const recent = json.data.slice(0, 6);
+      if (!recent.length) {
+        container.innerHTML = '<div class="px-5 py-4 text-xs text-slate-500 text-center">Belum ada data izin.</div>';
+        return;
+      }
+      container.innerHTML = recent.map(izin => `
+        <div class="px-5 py-3 flex items-center justify-between gap-4">
+          <div class="flex-1 min-w-0">
+            <p class="text-xs font-bold text-white truncate">${izin.pegawaiNama || '-'}</p>
+            <p class="text-[10px] text-slate-400 truncate">${izin.keterangan || '-'}</p>
+          </div>
+          <div class="text-right shrink-0">
+            <p class="text-[10px] text-slate-400">${izin.tanggalIzin || ''}</p>
+            <span class="inline-block mt-0.5 px-2 py-0.5 rounded-full text-[9px] font-bold ${this._adminStatusClass(izin.status)}">${this._adminStatusLabel(izin.status)}</span>
+          </div>
+        </div>
+      `).join('');
+    } catch(e) {
+      console.error('Gagal load recent izin:', e);
+    }
+  },
+
+  async loadAdminPegawai() {
+    try {
+      const res = await fetch('/api/admin/pegawai');
+      const json = await res.json();
+      const tbody = document.getElementById('adminPegawaiTable');
+      const countEl = document.getElementById('adminPegawaiCount');
+      if (!json.success || !json.data.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="px-5 py-6 text-center text-slate-500 text-xs">Tidak ada data pegawai.</td></tr>';
+        return;
+      }
+      countEl.textContent = `${json.data.length} pegawai`;
+      tbody.innerHTML = json.data.map(p => `
+        <tr class="hover:bg-slate-700/30 transition">
+          <td class="px-5 py-3 text-white font-semibold">${p.nama}</td>
+          <td class="px-5 py-3 text-slate-400 font-mono text-[11px]">${p.nip || '-'}</td>
+          <td class="px-5 py-3 text-slate-300">${p.jabatan || '-'}</td>
+          <td class="px-5 py-3">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${p.role === 'ketua_jabatan' ? 'bg-amber-900/60 text-amber-300 border border-amber-600/40' : 'bg-blue-900/50 text-blue-300 border border-blue-600/30'}">
+              ${p.role === 'ketua_jabatan' ? 'Ketua Jabatan' : 'Pegawai'}
+            </span>
+          </td>
+          <td class="px-5 py-3 text-center">
+            ${p.role === 'ketua_jabatan'
+              ? '<span class="text-[10px] text-slate-600 italic">Terlindungi</span>'
+              : `<button onclick="App.deleteAdminPegawai('${p.id}', '${p.nama.replace(/'/g,"\\'")}')"\n                class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-red-900/40 text-red-400 border border-red-700/40 hover:bg-red-800/60 transition">\n                Hapus\n              </button>`
+            }
+          </td>
+        </tr>
+      `).join('');
+    } catch(e) {
+      console.error('Gagal load pegawai admin:', e);
+    }
+  },
+
+  async loadAdminIzin(filterStatus = 'all') {
+    try {
+      if (!this._adminAllIzin.length) {
+        const res = await fetch('/api/admin/izin');
+        const json = await res.json();
+        if (!json.success) return;
+        this._adminAllIzin = json.data;
+      }
+      let list = this._adminAllIzin;
+      if (filterStatus !== 'all') list = list.filter(i => i.status === filterStatus);
+
+      const tbody = document.getElementById('adminIzinTable');
+      const countEl = document.getElementById('adminIzinCount');
+      countEl.textContent = `${list.length} data`;
+
+      if (!list.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="px-5 py-6 text-center text-slate-500 text-xs">Tidak ada data izin.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = list.map(izin => `
+        <tr class="hover:bg-slate-700/30 transition">
+          <td class="px-4 py-3 font-mono text-[11px] text-violet-300">${izin.kodeSurat || '-'}</td>
+          <td class="px-4 py-3">
+            <p class="font-semibold text-white text-xs">${izin.pegawaiNama || '-'}</p>
+            <p class="text-[10px] text-slate-500">${izin.pegawaiJabatan || ''}</p>
+          </td>
+          <td class="px-4 py-3 text-slate-300 text-[11px]">${izin.tanggalIzin || '-'}</td>
+          <td class="px-4 py-3 text-slate-300 text-[11px]">${izin.jamKeluar || '-'} – ${izin.jamMasuk || '?'}</td>
+          <td class="px-4 py-3 text-slate-400 text-[11px] max-w-[180px] truncate" title="${izin.keterangan || ''}">${izin.keterangan || '-'}</td>
+          <td class="px-4 py-3 text-center">
+            <span class="px-2 py-0.5 rounded-full text-[9px] font-bold ${this._adminStatusClass(izin.status)}">${this._adminStatusLabel(izin.status)}</span>
+          </td>
+          <td class="px-4 py-3 text-center">
+            <button onclick="App.deleteAdminIzin('${izin.id}')"
+              class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-red-900/40 text-red-400 border border-red-700/40 hover:bg-red-800/60 transition">
+              Hapus
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    } catch(e) {
+      console.error('Gagal load izin admin:', e);
+    }
+  },
+
+  filterAdminIzin(status) {
+    // Update active filter button
+    document.querySelectorAll('.admin-izin-filter').forEach(btn => {
+      const isActive = btn.dataset.adminIzinFilter === status;
+      btn.className = isActive
+        ? 'admin-izin-filter px-3 py-1 rounded-full text-[11px] font-bold bg-violet-600 text-white'
+        : 'admin-izin-filter px-3 py-1 rounded-full text-[11px] font-semibold bg-slate-700 text-slate-300 hover:bg-slate-600';
+    });
+    this.loadAdminIzin(status);
+  },
+
+  async deleteAdminPegawai(id, nama) {
+    if (!confirm(`Hapus akun pegawai "${nama}"?\nTindakan ini tidak dapat dibatalkan.`)) return;
+    try {
+      const res = await fetch(`/api/admin/pegawai/${id}`, { method: 'DELETE' });
+      const json = await res.json();
+      this.showToast(json.message, json.success ? 'success' : 'error');
+      if (json.success) await this.loadAdminPegawai();
+    } catch(e) {
+      this.showToast('Gagal menghapus pegawai.', 'error');
+    }
+  },
+
+  async deleteAdminIzin(id) {
+    if (!confirm('Hapus data izin ini?\nTindakan ini tidak dapat dibatalkan.')) return;
+    try {
+      const res = await fetch(`/api/admin/izin/${id}`, { method: 'DELETE' });
+      const json = await res.json();
+      this.showToast(json.message, json.success ? 'success' : 'error');
+      if (json.success) {
+        this._adminAllIzin = []; // reset cache
+        await this.loadAdminIzin();
+        await this.loadAdminStats();
+      }
+    } catch(e) {
+      this.showToast('Gagal menghapus data izin.', 'error');
+    }
+  },
+
+  switchAdminTab(tab) {
+    const tabs = { overview: 'adminTabOverview', pegawai: 'adminTabPegawai', izin: 'adminTabIzin' };
+    const titles = { overview: 'Ringkasan Sistem', pegawai: 'Manajemen Data Pegawai', izin: 'Riwayat Semua Izin Keluar' };
+
+    Object.entries(tabs).forEach(([key, id]) => {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle('hidden', key !== tab);
+    });
+
+    const titleEl = document.getElementById('adminPageTitle');
+    if (titleEl) titleEl.textContent = titles[tab] || '';
+
+    // Update nav button styles
+    document.querySelectorAll('.admin-nav-btn').forEach(btn => {
+      const isActive = btn.dataset.adminTab === tab;
+      btn.className = isActive
+        ? 'admin-nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-white bg-violet-600/80 hover:bg-violet-600 transition text-left'
+        : 'admin-nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-700/60 transition text-left';
+    });
+
+    // Load data sesuai tab
+    if (tab === 'pegawai') this.loadAdminPegawai();
+    if (tab === 'izin') { this._adminAllIzin = []; this.loadAdminIzin(); }
+    lucide.createIcons();
+  },
+
+  _adminStatusLabel(status) {
+    const map = { pending: 'Menunggu', approved: 'Disetujui', completed: 'Selesai', rejected: 'Ditolak' };
+    return map[status] || status;
+  },
+
+  _adminStatusClass(status) {
+    const map = {
+      pending: 'bg-amber-900/50 text-amber-300 border border-amber-600/40',
+      approved: 'bg-green-900/50 text-green-300 border border-green-600/40',
+      completed: 'bg-slate-700 text-slate-300 border border-slate-600',
+      rejected: 'bg-red-900/50 text-red-300 border border-red-600/40'
+    };
+    return map[status] || 'bg-slate-700 text-slate-300';
   }
 };
 

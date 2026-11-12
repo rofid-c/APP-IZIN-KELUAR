@@ -167,4 +167,40 @@ router.delete('/izin/:id', (req, res) => {
   res.json(result);
 });
 
+// ==========================================
+// ADMIN ENDPOINTS
+// ==========================================
+
+// GET /api/admin/stats — Statistik ringkasan sistem
+router.get('/admin/stats', (req, res) => {
+  const stats = storage.getAdminStats();
+  res.json({ success: true, data: stats });
+});
+
+// GET /api/admin/pegawai — Semua data pegawai
+router.get('/admin/pegawai', (req, res) => {
+  const list = storage.getAllPegawai();
+  res.json({ success: true, data: list });
+});
+
+// DELETE /api/admin/pegawai/:id — Hapus akun pegawai
+router.delete('/admin/pegawai/:id', (req, res) => {
+  const result = storage.deletePegawai(req.params.id);
+  if (!result.success) return res.status(400).json(result);
+  res.json(result);
+});
+
+// GET /api/admin/izin — Semua izin seluruh pegawai
+router.get('/admin/izin', (req, res) => {
+  const list = storage.getAllIzinAdmin();
+  res.json({ success: true, data: list });
+});
+
+// DELETE /api/admin/izin/:id — Hapus record izin (admin)
+router.delete('/admin/izin/:id', (req, res) => {
+  const result = storage.deleteIzinAdmin(req.params.id);
+  if (!result.success) return res.status(400).json(result);
+  res.json(result);
+});
+
 module.exports = router;
