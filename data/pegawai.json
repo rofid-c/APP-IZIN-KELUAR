@@ -1,23 +1,34 @@
 [
   {
     "id": "KJ-001",
-    "nama": "Dr. H. Ahmad Zarkasi, S.H.I., M.H.",
+    "nama": "tes",
     "username": "Ahmad Zarkasi",
-    "nip": "197405102001121001",
-    "password": "197405102001121001",
+    "nip": "123456789",
+    "password": "123456789",
     "jabatan": "Ketua Pengadilan Agama Gunung Sugih",
     "role": "ketua_jabatan",
     "statusAkun": "active"
   },
   {
-    "id": "KJ-0736",
-    "nama": "Drs. H. M. Ihsan, M.H.",
-    "username": "Drs. H. M. Ihsan, M.H.",
-    "nip": "196803151994031005",
-    "password": "196803151994031005",
-    "jabatan": "Wakil Ketua Pengadilan Agama Gunung Sugih",
-    "role": "ketua_jabatan",
+    "id": "PEG-0485",
+    "nama": "tr",
+    "username": "tr",
+    "nip": "12345678",
+    "password": "12345678",
+    "jabatan": "resepsionis",
+    "role": "pegawai",
     "statusAkun": "active",
-    "createdAt": "2026-11-12T03:00:00.736Z"
+    "createdAt": "2026-11-12T03:42:20.485Z"
+  },
+  {
+    "id": "PEG-1263",
+    "nama": "yt",
+    "username": "yt",
+    "nip": "7654321",
+    "password": "7654321",
+    "jabatan": "ob",
+    "role": "pegawai",
+    "statusAkun": "pending",
+    "createdAt": "2026-11-12T03:43:01.263Z"
   }
 ]

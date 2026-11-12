@@ -219,10 +219,17 @@ const App = {
       const json = await res.json();
 
       if (json.success) {
-        this.showToast('Pendaftaran akun berhasil! Selamat datang.', 'success');
-        this.state.currentUser = json.user;
-        localStorage.setItem('e_izin_user', JSON.stringify(json.user));
-        this.routeDashboard();
+        // Reset form pendaftaran
+        document.getElementById('formRegister')?.reset();
+
+        // Pindah ke tab login dan otomatis isikan Nama & NIP yang baru didaftarkan
+        this.switchAuthTab('login');
+        const loginNama = document.getElementById('loginNama');
+        const loginNip = document.getElementById('loginNip');
+        if (loginNama) loginNama.value = nama;
+        if (loginNip) loginNip.value = nip;
+
+        this.showToast(json.message || 'Pendaftaran berhasil! Akun Anda sedang menunggu persetujuan (ACC) dari Admin.', 'info', 6000);
       } else {
         this.showToast(json.message || 'Pendaftaran gagal.', 'error');
       }
@@ -230,7 +237,7 @@ const App = {
       this.showToast('Gagal terhubung ke server.', 'error');
     } finally {
       btn.disabled = false;
-      btn.innerHTML = `<i data-lucide="user-plus" class="w-4 h-4"></i> Daftar & Masuk Pegawai`;
+      btn.innerHTML = `<i data-lucide="user-plus" class="w-4 h-4"></i> Daftar Akun Pegawai`;
       lucide.createIcons();
     }
   },
@@ -1115,7 +1122,7 @@ const App = {
     window.print();
   },
 
-  showToast(message, type = 'info') {
+  showToast(message, type = 'info', duration = 3500) {
     const container = document.getElementById('toastContainer');
     if (!container) return;
 
@@ -1123,7 +1130,8 @@ const App = {
     const bgColors = {
       success: 'bg-emerald-800 text-white',
       error: 'bg-red-800 text-white',
-      info: 'bg-slate-900 text-white'
+      info: 'bg-slate-900 text-white',
+      warning: 'bg-amber-800 text-white'
     };
 
     toast.className = `p-3 rounded-xl text-xs font-semibold shadow-lg transition-all transform duration-200 -translate-y-2 opacity-0 ${bgColors[type] || bgColors.info}`;
@@ -1136,8 +1144,8 @@ const App = {
 
     setTimeout(() => {
       toast.classList.add('-translate-y-2', 'opacity-0');
-      setTimeout(() => toast.remove(), 2500);
-    }, 3000);
+      setTimeout(() => toast.remove(), 400);
+    }, duration);
   },
 
   // ==========================================

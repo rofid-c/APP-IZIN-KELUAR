@@ -210,7 +210,7 @@ const storage = {
       password: cleanNip,
       jabatan: (jabatan || 'Pegawai').trim(),
       role: 'pegawai',
-      statusAkun: 'active', // Pegawai default aktif atau bisa langsung digunakan
+      statusAkun: 'pending', // Akun baru wajib persetujuan (ACC) dari Admin
       createdAt: new Date().toISOString()
     };
 
@@ -218,7 +218,8 @@ const storage = {
     writeJSON(PEGAWAI_FILE, list);
     return {
       success: true,
-      message: 'Akun pegawai berhasil didaftarkan.',
+      pendingApproval: true,
+      message: 'Pendaftaran berhasil! Akun Anda sedang menunggu persetujuan (ACC) dari Administrator sebelum dapat masuk.',
       user: {
         id: newUser.id,
         nama: newUser.nama,
