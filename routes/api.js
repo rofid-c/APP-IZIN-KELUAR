@@ -21,6 +21,13 @@ router.post('/login', (req, res) => {
     });
   }
 
+  if (user.error) {
+    return res.status(403).json({
+      success: false,
+      message: user.message || 'Akun tidak diizinkan masuk.'
+    });
+  }
+
   res.json({
     success: true,
     message: 'Login berhasil.',
@@ -177,20 +184,63 @@ router.get('/admin/stats', (req, res) => {
   res.json({ success: true, data: stats });
 });
 
-// GET /api/admin/pegawai — Semua data pegawai
-router.get('/admin/pegawai', (req, res) => {
-  const list = storage.getAllPegawai();
+// GET /api/admin/users — Semua data akun (pegawai & ketua jabatan)
+router.get('/api/admin/users', (req, res) => {
+  const list = storage.getAllUsersAdmin();
+  res.json({ success: true, data: list });
+});
+router.get('/admin/users', (req, res) => {
+  const list = storage.getAllUsersAdmin();
   res.json({ success: true, data: list });
 });
 
-// DELETE /api/admin/pegawai/:id — Hapus akun pegawai
-router.delete('/admin/pegawai/:id', (req, res) => {
-  const result = storage.deletePegawai(req.params.id);
+// GET /api/admin/pegawai (alias)
+router.get('/admin/pegawai', (req, res) => {
+  const list = storage.getAllUsersAdmin();
+  res.json({ success: true, data: list });
+});
+
+// POST /api/admin/users — Buat akun baru (Pegawai atau Ketua Jabatan)
+router.post('/admin/users', (req, res) => {
+  const { nama, nip, jabatan, role, statusAkun } = req.body;
+  if (!nama || !nip) {
+    return res.status(400).json({ success: false, message: 'Nama dan NIP wajib diisi.' });
+  }
+  const result = storage.createUserAdmin({ nama, nip, jabatan, role, statusAkun });
+  if (!result.success) return res.status(400).json(result);
+  res.status(201).json(result);
+});
+
+// PUT /api/admin/users/:id/status — Update status akun (ACC / Aktifkan / Nonaktifkan)
+router.put('/admin/users/:id/status', (req, res) => {
+  const { status } = req.body;
+  const result = storage.updateUserStatus(req.params.id, status);
   if (!result.success) return res.status(400).json(result);
   res.json(result);
 });
 
-// GET /api/admin/izin — Semua izin seluruh pegawai
+// PUT /api/admin/users/:id — Edit data akun (Admin)
+router.put('/admin/users/:id', (req, res) => {
+  const result = storage.updateUserAdmin(req.params.id, req.body);
+  if (!result.success) return res.status(400).json(result);
+  res.json(result);
+});
+
+// DELETE /api/admin/users/:id — Hapus akun
+router.delete('/admin/users/:id', (req, res) => {
+  const result = storage.deleteUserAdmin(req.params.id);
+  if (!result.success) return res.status(400).json(result);
+  res.json(result);
+});
+
+// DELETE /api/admin/pegawai/:id (alias)
+router.delete('/admin/pegawai/:id', (req, res) => {
+  const result = storage.deleteUserAdmin(req.params.id);
+  if (!result.success) return res.status(400).json(result);
+  res.json(result);
+});
+
+// GET /api/admin/izin — Semua izin seluruh pegawai beserta alur surat (timeline)
 router.get('/admin/izin', (req, res) => {
   const list = storage.getAllIzinAdmin();
   res.json({ success: true, data: list });
