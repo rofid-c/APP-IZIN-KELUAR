@@ -32,3 +32,4 @@ CARA MEMATIKAN APLIKASI:
 - Cukup tutup jendela Command Prompt (jendela hitam) atau tekan Ctrl + C.
 
 ========================================================================
+
