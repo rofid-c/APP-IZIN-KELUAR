@@ -18,7 +18,8 @@ APA YANG TERJADI SAAT START.bat DIJALANKAN?
   - Jendela TIDAK AKAN langsung tertutup sendiri sehingga Anda bisa 
     membaca instruksi dengan nyaman.
 - File akan otomatis memeriksa pustaka modul (node_modules).
-  - Jika belum ada, otomatis mendownload modul yang dibutuhkan (npm install).
+  - Jika belum ada, otomatis mendownload modul dan database SQLite (npm install).
+  - Tidak perlu install XAMPP, Laragon, MySQL, atau software DB lainnya!
 - Server aplikasi akan otomatis berjalan di port 3000.
 - Browser (Chrome/Edge) akan otomatis terbuka dan menampilkan:
   http://localhost:3000

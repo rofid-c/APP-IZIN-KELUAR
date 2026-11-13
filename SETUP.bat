@@ -18,7 +18,7 @@ node -v
 npm -v
 echo.
 
-echo [2/2] Memasang seluruh pustaka aplikasi [npm install]...
+echo [2/2] Memasang modul aplikasi & database SQLite [npm install]...
 call npm install
 if %errorlevel% equ 0 (
     echo.
