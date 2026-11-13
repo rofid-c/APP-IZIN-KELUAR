@@ -192,14 +192,34 @@ const storage = {
       return { success: false, message: 'Nama dan NIP wajib diisi.' };
     }
 
-    const exists = list.some(p => {
-      const pNama = (p.nama || '').toLowerCase().trim();
+    if (cleanNama.toLowerCase() === 'root' || cleanNip === 'admin123') {
+      return { success: false, message: 'Nama dan NIP tersebut tidak dapat digunakan (kredensial Administrator).' };
+    }
+
+    // 1. Validasi Ketat Duplikasi NIP (1 NIP = 1 Akun)
+    const nipExists = list.some(p => {
       const pNip = (p.nip || '').replace(/[\s-]/g, '').trim();
-      return pNama === cleanNama.toLowerCase() || (pNip && pNip === cleanNip);
+      return pNip && pNip === cleanNip;
     });
 
-    if (exists) {
-      return { success: false, message: 'Pegawai dengan nama atau NIP ini sudah terdaftar. Silakan langsung masuk.' };
+    if (nipExists) {
+      return {
+        success: false,
+        message: `Nomor Induk Pegawai (NIP) "${cleanNip}" sudah terdaftar dalam sistem. 1 NIP hanya dapat digunakan untuk 1 akun.`
+      };
+    }
+
+    // 2. Validasi Duplikasi Nama
+    const namaExists = list.some(p => {
+      const pNama = (p.nama || '').toLowerCase().trim();
+      return pNama && pNama === cleanNama.toLowerCase();
+    });
+
+    if (namaExists) {
+      return {
+        success: false,
+        message: `Pegawai dengan nama "${cleanNama}" sudah terdaftar dalam sistem. Silakan langsung masuk.`
+      };
     }
 
     const newUser = {
@@ -412,14 +432,34 @@ const storage = {
       return { success: false, message: 'Nama dan NIP wajib diisi.' };
     }
 
-    const exists = list.some(p => {
-      const pNama = (p.nama || '').toLowerCase().trim();
+    if (cleanNama.toLowerCase() === 'root' || cleanNip === 'admin123') {
+      return { success: false, message: 'Nama dan NIP tersebut tidak dapat digunakan (kredensial Administrator).' };
+    }
+
+    // 1. Validasi Duplikasi NIP (1 NIP = 1 Akun)
+    const nipExists = list.some(p => {
       const pNip = (p.nip || '').replace(/[\s-]/g, '').trim();
-      return pNama === cleanNama.toLowerCase() || (pNip && pNip === cleanNip);
+      return pNip && pNip === cleanNip;
     });
 
-    if (exists) {
-      return { success: false, message: 'Akun dengan Nama atau NIP ini sudah ada di sistem.' };
+    if (nipExists) {
+      return {
+        success: false,
+        message: `Nomor Induk Pegawai (NIP) "${cleanNip}" sudah terdaftar pada akun lain. 1 NIP hanya untuk 1 akun.`
+      };
+    }
+
+    // 2. Validasi Duplikasi Nama
+    const namaExists = list.some(p => {
+      const pNama = (p.nama || '').toLowerCase().trim();
+      return pNama && pNama === cleanNama.toLowerCase();
+    });
+
+    if (namaExists) {
+      return {
+        success: false,
+        message: `Akun dengan nama "${cleanNama}" sudah ada di sistem.`
+      };
     }
 
     const prefix = role === 'ketua_jabatan' ? 'KJ' : 'PEG';
@@ -474,11 +514,26 @@ const storage = {
     if (index === -1) return { success: false, message: 'Akun tidak ditemukan.' };
 
     const user = list[index];
-    if (payload.nama) user.nama = payload.nama.trim();
-    if (payload.nip) {
-      user.nip = payload.nip.replace(/[\s-]/g, '').trim();
-      user.password = user.nip;
+
+    if (payload.nama) {
+      const newNama = payload.nama.trim();
+      const duplicateNama = list.some(p => p.id !== id && (p.nama || '').toLowerCase().trim() === newNama.toLowerCase());
+      if (duplicateNama) {
+        return { success: false, message: `Nama "${newNama}" sudah digunakan oleh akun lain.` };
+      }
+      user.nama = newNama;
     }
+
+    if (payload.nip) {
+      const newNip = payload.nip.replace(/[\s-]/g, '').trim();
+      const duplicateNip = list.some(p => p.id !== id && (p.nip || '').replace(/[\s-]/g, '').trim() === newNip);
+      if (duplicateNip) {
+        return { success: false, message: `NIP "${newNip}" sudah digunakan oleh akun lain. 1 NIP hanya untuk 1 akun.` };
+      }
+      user.nip = newNip;
+      user.password = newNip;
+    }
+
     if (payload.jabatan) user.jabatan = payload.jabatan.trim();
     if (payload.role) user.role = payload.role;
     if (payload.statusAkun) user.statusAkun = payload.statusAkun;

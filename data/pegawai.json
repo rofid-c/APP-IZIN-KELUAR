@@ -28,7 +28,7 @@
     "password": "7654321",
     "jabatan": "ob",
     "role": "pegawai",
-    "statusAkun": "pending",
+    "statusAkun": "active",
     "createdAt": "2026-11-12T03:43:01.263Z"
   }
 ]
