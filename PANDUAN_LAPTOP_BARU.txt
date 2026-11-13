@@ -1,0 +1,34 @@
+========================================================================
+   PANDUAN MENJALANKAN APLIKASI E-IZIN DI LAPTOP LAIN / BARU
+                  PENGADILAN AGAMA GUNUNG SUGIH
+========================================================================
+
+Jika folder proyek ini dikirim / dipindahkan ke laptop lain:
+
+CARA MENJALANKAN:
+1. Buka folder aplikasi ini di laptop baru.
+2. Cukup klik ganda (double-click) file:
+   👉 START.bat
+
+APA YANG TERJADI SAAT START.bat DIJALANKAN?
+- File akan otomatis memeriksa apakah di laptop sudah terpasang Node.js.
+  - Jika BELUM terpasang: Sistem akan menawarkan install otomatis via 
+    Windows Package Manager (winget) atau otomatis membuka website 
+    resmi https://nodejs.org/ di browser untuk Anda unduh.
+  - Jendela TIDAK AKAN langsung tertutup sendiri sehingga Anda bisa 
+    membaca instruksi dengan nyaman.
+- File akan otomatis memeriksa pustaka modul (node_modules).
+  - Jika belum ada, otomatis mendownload modul yang dibutuhkan (npm install).
+- Server aplikasi akan otomatis berjalan di port 3000.
+- Browser (Chrome/Edge) akan otomatis terbuka dan menampilkan:
+  http://localhost:3000
+
+MENGAKSES DARI HP / LAPTOP LAIN DALAM 1 JARINGAN WI-FI KANTOR:
+- Pada jendela hitam START.bat akan tertera alamat akses HP, contoh:
+  http://192.168.100.xx:3000
+- Buka browser HP yang terhubung ke Wi-Fi kantor yang sama dan buka link tsb.
+
+CARA MEMATIKAN APLIKASI:
+- Cukup tutup jendela Command Prompt (jendela hitam) atau tekan Ctrl + C.
+
+========================================================================
