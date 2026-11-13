@@ -10,7 +10,7 @@ echo        E-IZIN - PENGADILAN AGAMA GUNUNG SUGIH
 echo             SISTEM PERIZINAN KELUAR KANTOR
 echo ============================================================
 echo.
- 
+
 rem 1. Cek apakah Node.js sudah terpasang
 where node >nul 2>nul
 if %errorlevel% neq 0 goto :NO_NODE
