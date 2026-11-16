@@ -249,6 +249,12 @@
         </div>
 
         <div class="flex items-center gap-2">
+          <!-- Tombol Tes Suara & Notifikasi Pimpinan -->
+          <button onclick="App.testLiveNotification()" title="Tes Suara Lonceng & Izin Notifikasi"
+            class="px-2.5 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 rounded-xl text-amber-200 transition flex items-center gap-1.5 text-xs font-bold">
+            <i data-lucide="bell" class="w-3.5 h-3.5 text-amber-300"></i>
+            <span class="hidden sm:inline text-[11px]">Tes Notif</span>
+          </button>
           <span id="ketuaHeaderNama" class="text-xs font-bold text-white max-w-[120px] truncate hidden sm:inline">
             Dr. H. Ahmad Zarkasi
           </span>
@@ -443,6 +449,11 @@
 
       <!-- Quick Actions -->
       <div class="flex items-center gap-2">
+        <button onclick="App.testLiveNotification()" title="Tes Suara Lonceng & Izin Notifikasi"
+          class="px-2.5 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 rounded-xl text-emerald-200 transition flex items-center gap-1.5 text-xs font-bold">
+          <i data-lucide="bell" class="w-3.5 h-3.5 text-emerald-300"></i>
+          <span class="hidden sm:inline text-[11px]">Tes Notif</span>
+        </button>
         <button onclick="App.logout()" title="Keluar"
           class="p-2 rounded-xl text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition">
           <i data-lucide="log-out" class="w-4 h-4"></i>
@@ -1122,6 +1133,9 @@
       </div>
     </div>
   </div>
+
+  <!-- Live Pop-up Notification Container (Suara + Pop-up Alert Realtime) -->
+  <div id="livePopupContainer" class="fixed top-4 right-4 z-[70] flex flex-col gap-3 max-w-sm w-full pointer-events-none px-3 sm:px-0"></div>
 
   <!-- Toast Container -->
   <div id="toastContainer" class="fixed top-3 left-4 right-4 z-50 flex flex-col gap-2 max-w-sm mx-auto pointer-events-none"></div>

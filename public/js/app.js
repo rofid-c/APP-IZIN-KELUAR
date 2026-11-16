@@ -49,6 +49,9 @@ const App = {
     this.bindEvents();
     this.initSignaturePad();
     this.initKetuaSignaturePad();
+    document.addEventListener('click', () => {
+      this.initAudioContext();
+    }, { once: false });
     lucide.createIcons();
   },
 
@@ -88,6 +91,7 @@ const App = {
       document.getElementById('viewDashboardKetua').classList.add('hidden');
       document.getElementById('viewDashboardAdmin').classList.remove('hidden');
       await this.loadAdminDashboard();
+      this.startLivePolling();
     } else if (u.role === 'ketua_jabatan') {
       // Tampilan Ketua Jabatan / Pimpinan (Modul Approval & Izin Mandiri)
       document.getElementById('viewDashboardPegawai').classList.add('hidden');
@@ -100,8 +104,10 @@ const App = {
       await this.loadAtasanList();
       await this.loadKetuaIzinList();
       await this.loadKetuaMyIzinList();
+      this.startLivePolling();
     } else {
       // Tampilan Pegawai Biasa
+      this.stopLivePolling();
       document.getElementById('viewDashboardKetua').classList.add('hidden');
       document.getElementById('viewDashboardPegawai').classList.remove('hidden');
       document.getElementById('pegawaiHeaderNama').textContent = u.nama;
@@ -249,6 +255,9 @@ const App = {
 
   // Logout
   logout() {
+    this.stopLivePolling();
+    const popupContainer = document.getElementById('livePopupContainer');
+    if (popupContainer) popupContainer.innerHTML = '';
     localStorage.removeItem('e_izin_user');
     this.showLogin();
     this.showToast('Anda telah keluar dari aplikasi.', 'info');
@@ -1438,8 +1447,408 @@ const App = {
   },
 
   // ==========================================
-  // MODUL ADMIN (PENGADILAN AGAMA GUNUNG SUGIH)
+  // REAL-TIME NOTIFIKASI, SUARA & POP-UP
+  // (Ketua Jabatan, Wakil Ketua & Admin)
   // ==========================================
+
+  _audioCtx: null,
+  _pollInterval: null,
+  _knownPendingIzinIds: new Set(),
+  _knownPendingUserIds: new Set(),
+  _livePollingInitialized: false,
+
+  initAudioContext() {
+    try {
+      const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtxClass) return null;
+      if (!this._audioCtx) {
+        this._audioCtx = new AudioCtxClass();
+      }
+      if (this._audioCtx.state === 'suspended') {
+        this._audioCtx.resume();
+      }
+      return this._audioCtx;
+    } catch (e) {
+      return null;
+    }
+  },
+
+  // Suara Lonceng / Chime Pengadilan Menggunakan Web Audio API Bawaan Browser
+  playNotificationSound() {
+    try {
+      const ctx = this.initAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+
+      // Nada 1: 587.33 Hz (D5) - Dentang lonceng awal
+      const o1 = ctx.createOscillator();
+      const g1 = ctx.createGain();
+      o1.type = 'sine';
+      o1.frequency.setValueAtTime(587.33, now);
+      g1.gain.setValueAtTime(0.25, now);
+      g1.gain.exponentialRampToValueAtTime(0.0001, now + 0.55);
+      o1.connect(g1);
+      g1.connect(ctx.destination);
+      o1.start(now);
+      o1.stop(now + 0.55);
+
+      // Nada 2: 880.00 Hz (A5) - Nada lonceng utama merdu
+      const o2 = ctx.createOscillator();
+      const g2 = ctx.createGain();
+      o2.type = 'sine';
+      o2.frequency.setValueAtTime(880, now + 0.12);
+      g2.gain.setValueAtTime(0.3, now + 0.12);
+      g2.gain.exponentialRampToValueAtTime(0.0001, now + 0.75);
+      o2.connect(g2);
+      g2.connect(ctx.destination);
+      o2.start(now + 0.12);
+      o2.stop(now + 0.75);
+
+      // Nada 3: 1174.66 Hz (D6) - Harmoni lonceng berkilau
+      const o3 = ctx.createOscillator();
+      const g3 = ctx.createGain();
+      o3.type = 'sine';
+      o3.frequency.setValueAtTime(1174.66, now + 0.24);
+      g3.gain.setValueAtTime(0.22, now + 0.24);
+      g3.gain.exponentialRampToValueAtTime(0.0001, now + 0.95);
+      o3.connect(g3);
+      g3.connect(ctx.destination);
+      o3.start(now + 0.24);
+      o3.stop(now + 0.95);
+    } catch (err) {
+      console.warn('Audio playback error:', err);
+    }
+  },
+
+  // Minta Izin Notifikasi Desktop Browser (Windows / Android)
+  requestNotificationPermission() {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().then(perm => {
+        if (perm === 'granted') {
+          this.showToast('Izin notifikasi desktop aktif.', 'success');
+        }
+      });
+    }
+  },
+
+  // Tampilkan Notifikasi Desktop Sistem (Bila Browser Di-Minimize)
+  showDesktopNotification(title, body, onClick) {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      try {
+        const notif = new Notification(title, {
+          body: body,
+          icon: '/logo-pa.png',
+          badge: '/logo-pa.svg'
+        });
+        if (typeof onClick === 'function') {
+          notif.onclick = () => {
+            window.focus();
+            onClick();
+            notif.close();
+          };
+        }
+      } catch (e) {
+        console.warn('Desktop notification error:', e);
+      }
+    }
+  },
+
+  // Mulai Background Polling Otomatis (Cek Izin Baru & Akun Baru)
+  startLivePolling() {
+    this.stopLivePolling();
+    this._knownPendingIzinIds = new Set();
+    this._knownPendingUserIds = new Set();
+    this._livePollingInitialized = false;
+
+    // Ambil data awal tanpa membunyikan notif untuk data lama
+    this.checkLiveUpdates(true);
+
+    // Cek berkala setiap 5 detik
+    this._pollInterval = setInterval(() => {
+      this.checkLiveUpdates(false);
+    }, 5000);
+  },
+
+  stopLivePolling() {
+    if (this._pollInterval) {
+      clearInterval(this._pollInterval);
+      this._pollInterval = null;
+    }
+  },
+
+  async checkLiveUpdates(isInitial = false) {
+    const user = this.state.currentUser;
+    if (!user) return;
+
+    try {
+      // 1. KETUA JABATAN & WAKIL KETUA: Cek Permohonan Izin Baru Pegawai
+      if (user.role === 'ketua_jabatan') {
+        const res = await fetch('/api/izin?status=pending');
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data)) {
+          // Permohonan dari pegawai lain yang butuh persetujuan
+          const staffPending = json.data.filter(i => i.pegawaiId !== user.id);
+
+          if (isInitial) {
+            staffPending.forEach(i => this._knownPendingIzinIds.add(i.id));
+            this._livePollingInitialized = true;
+          } else {
+            let foundNew = false;
+            for (const item of staffPending) {
+              if (!this._knownPendingIzinIds.has(item.id)) {
+                this._knownPendingIzinIds.add(item.id);
+                foundNew = true;
+
+                // Bunyikan Lonceng
+                this.playNotificationSound();
+
+                // Tampilkan Pop-up Alert di Web
+                this.showIzinPopup(item);
+
+                // Tampilkan Notifikasi Desktop Windows/HP
+                this.showDesktopNotification(
+                  '🔔 Permohonan Izin Keluar Baru!',
+                  `${item.pegawaiNama} (${item.pegawaiJabatan || 'Pegawai'}) mengajukan izin: "${item.keterangan}"`,
+                  () => {
+                    this.handleAlertOpenIzin(item.id);
+                  }
+                );
+              }
+            }
+
+            if (foundNew) {
+              // Refresh daftar izin & badge di panel ketua
+              await this.loadKetuaIzinList();
+            }
+          }
+        }
+      }
+
+      // 2. ADMIN: Cek Pendaftaran Akun Baru Pegawai yang Butuh ACC
+      if (user.role === 'admin') {
+        const res = await fetch('/api/admin/users');
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data)) {
+          const pendingUsers = json.data.filter(u => u.statusAkun === 'pending');
+
+          if (isInitial) {
+            pendingUsers.forEach(u => this._knownPendingUserIds.add(u.id));
+            this._livePollingInitialized = true;
+          } else {
+            let foundNewUser = false;
+            for (const u of pendingUsers) {
+              if (!this._knownPendingUserIds.has(u.id)) {
+                this._knownPendingUserIds.add(u.id);
+                foundNewUser = true;
+
+                // Bunyikan Lonceng
+                this.playNotificationSound();
+
+                // Tampilkan Pop-up Alert di Web
+                this.showUserPopup(u);
+
+                // Tampilkan Notifikasi Desktop Windows/HP
+                this.showDesktopNotification(
+                  '👤 Pendaftaran Akun Baru!',
+                  `${u.nama} (NIP: ${u.nip || '-'}) mendaftar akun baru dan butuh persetujuan (ACC).`,
+                  () => {
+                    this.handleAlertOpenUser();
+                  }
+                );
+              }
+            }
+
+            if (foundNewUser) {
+              // Refresh tabel & statistik admin
+              await this.loadAdminUsers();
+              await this.loadAdminStats();
+            }
+          }
+        }
+      }
+    } catch (err) {
+      // Diamkan jika error jaringan sesaat saat polling
+    }
+  },
+
+  // Tampilkan Pop-up Melayang: Permohonan Izin Masuk (Ketua & Wakil)
+  showIzinPopup(item) {
+    const container = document.getElementById('livePopupContainer');
+    if (!container) return;
+
+    const card = document.createElement('div');
+    card.className = 'alert-card bg-white border-2 border-amber-500 rounded-2xl p-4 shadow-2xl pointer-events-auto transform transition-all duration-300 translate-y-0 opacity-100 flex flex-col gap-2.5';
+    card.innerHTML = `
+      <div class="flex items-start justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
+            <i data-lucide="bell-ring" class="w-4 h-4 animate-pulse"></i>
+          </div>
+          <div>
+            <span class="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-300">
+              Izin Butuh ACC
+            </span>
+            <h4 class="text-xs font-bold text-slate-900 mt-0.5">Permohonan Izin Baru!</h4>
+          </div>
+        </div>
+        <button type="button" class="btn-close-alert text-slate-400 hover:text-slate-600 p-1">
+          <i data-lucide="x" class="w-3.5 h-3.5"></i>
+        </button>
+      </div>
+
+      <div class="bg-amber-50/60 rounded-xl p-2.5 text-xs border border-amber-100 space-y-1">
+        <div class="font-bold text-slate-900 flex items-center gap-1.5">
+          <i data-lucide="user" class="w-3.5 h-3.5 text-amber-700"></i>
+          <span>${item.pegawaiNama}</span>
+          <span class="text-[10px] font-normal text-slate-600">(${item.pegawaiJabatan || 'Pegawai'})</span>
+        </div>
+        <p class="text-[11px] text-slate-700 italic">"${item.keterangan || '-'}"</p>
+        <p class="text-[10px] font-semibold text-amber-900">🕒 Pukul ${item.jamKeluar} s.d. ${item.jamMasuk} WIB</p>
+      </div>
+
+      <div class="flex items-center gap-2 pt-1">
+        <button type="button" class="btn-action-alert flex-1 py-1.5 px-3 rounded-xl text-xs font-bold bg-amber-700 hover:bg-amber-800 text-white transition flex items-center justify-center gap-1 shadow-xs">
+          <i data-lucide="check-square" class="w-3.5 h-3.5"></i>
+          <span>Buka & Setujui</span>
+        </button>
+        <button type="button" class="btn-close-alert py-1.5 px-3 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+          Tutup
+        </button>
+      </div>
+    `;
+
+    card.querySelectorAll('.btn-close-alert').forEach(btn => {
+      btn.addEventListener('click', () => card.remove());
+    });
+
+    const actionBtn = card.querySelector('.btn-action-alert');
+    if (actionBtn) {
+      actionBtn.addEventListener('click', () => {
+        this.handleAlertOpenIzin(item.id);
+        card.remove();
+      });
+    }
+
+    container.prepend(card);
+    lucide.createIcons();
+
+    setTimeout(() => {
+      if (card.parentNode) {
+        card.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => card.remove(), 300);
+      }
+    }, 20000);
+  },
+
+  // Tampilkan Pop-up Melayang: Pendaftaran Akun Baru (Admin)
+  showUserPopup(user) {
+    const container = document.getElementById('livePopupContainer');
+    if (!container) return;
+
+    const card = document.createElement('div');
+    card.className = 'alert-card bg-white border-2 border-emerald-600 rounded-2xl p-4 shadow-2xl pointer-events-auto transform transition-all duration-300 translate-y-0 opacity-100 flex flex-col gap-2.5';
+    card.innerHTML = `
+      <div class="flex items-start justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
+            <i data-lucide="user-plus" class="w-4 h-4 animate-pulse"></i>
+          </div>
+          <div>
+            <span class="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-300">
+              Pendaftaran Baru
+            </span>
+            <h4 class="text-xs font-bold text-slate-900 mt-0.5">Akun Pegawai Butuh ACC!</h4>
+          </div>
+        </div>
+        <button type="button" class="btn-close-alert text-slate-400 hover:text-slate-600 p-1">
+          <i data-lucide="x" class="w-3.5 h-3.5"></i>
+        </button>
+      </div>
+
+      <div class="bg-emerald-50/60 rounded-xl p-2.5 text-xs border border-emerald-100 space-y-1">
+        <div class="font-bold text-slate-900 flex items-center gap-1.5">
+          <i data-lucide="user" class="w-3.5 h-3.5 text-emerald-700"></i>
+          <span>${user.nama}</span>
+        </div>
+        <p class="text-[11px] text-slate-700">NIP: <span class="font-mono font-bold">${user.nip || '-'}</span> • Jabatan: <span class="font-semibold">${user.jabatan || 'Pegawai'}</span></p>
+      </div>
+
+      <div class="flex items-center gap-2 pt-1">
+        <button type="button" class="btn-action-alert flex-1 py-1.5 px-3 rounded-xl text-xs font-bold bg-emerald-800 hover:bg-emerald-900 text-white transition flex items-center justify-center gap-1 shadow-xs">
+          <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+          <span>Tinjau Akun (ACC)</span>
+        </button>
+        <button type="button" class="btn-close-alert py-1.5 px-3 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+          Tutup
+        </button>
+      </div>
+    `;
+
+    card.querySelectorAll('.btn-close-alert').forEach(btn => {
+      btn.addEventListener('click', () => card.remove());
+    });
+
+    const actionBtn = card.querySelector('.btn-action-alert');
+    if (actionBtn) {
+      actionBtn.addEventListener('click', () => {
+        this.handleAlertOpenUser();
+        card.remove();
+      });
+    }
+
+    container.prepend(card);
+    lucide.createIcons();
+
+    setTimeout(() => {
+      if (card.parentNode) {
+        card.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => card.remove(), 300);
+      }
+    }, 20000);
+  },
+
+  // Handler Buka Permohonan dari Pop-up (Ketua / Wakil)
+  handleAlertOpenIzin(izinId) {
+    this.switchKetuaTab('acc');
+    this.filterKetuaIzin('pending');
+    this.openApprovalModal(izinId);
+  },
+
+  // Handler Buka Antrean Akun dari Pop-up (Admin)
+  handleAlertOpenUser() {
+    this.switchAdminTab('users');
+    this.filterAdminUsers('pending');
+  },
+
+  // Tombol Uji Coba Suara & Notifikasi
+  testLiveNotification() {
+    this.initAudioContext();
+    this.playNotificationSound();
+    this.requestNotificationPermission();
+
+    const user = this.state.currentUser;
+    if (user && user.role === 'admin') {
+      this.showUserPopup({
+        id: 'TEST-USER',
+        nama: 'Contoh: Ahmad Zarkasi',
+        nip: '198501012010121001',
+        jabatan: 'Staff Pelaksana'
+      });
+      this.showDesktopNotification('🔔 Uji Coba Notifikasi Admin', 'Suara lonceng dan pop-up berfungsi sempurna.');
+    } else {
+      this.showIzinPopup({
+        id: 'TEST-IZIN',
+        pegawaiNama: 'Contoh: Siti Rahma',
+        pegawaiJabatan: 'Pranata Komputer',
+        keterangan: 'Urusan Administrasi Bank BRI',
+        jamKeluar: '10:00',
+        jamMasuk: '11:30'
+      });
+      this.showDesktopNotification('🔔 Uji Coba Notifikasi Pimpinan', 'Suara lonceng dan pop-up berfungsi sempurna.');
+    }
+
+    this.showToast('🔔 Suara lonceng & notifikasi aktif!', 'success');
+  },
 
   _adminAllUsers: [],
   _adminAllIzin: [],
