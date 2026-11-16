@@ -1968,7 +1968,7 @@ const App = {
               class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-bold transition flex items-center gap-1">
               <i data-lucide="eye" class="w-3 h-3"></i> Detail
             </button>
-            <button onclick="App.showTiketModal('${izin.id}')"
+            <button onclick="App.openTiketModal('${izin.id}')"
               class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-lg text-[11px] font-bold transition flex items-center gap-1" title="Lihat Surat Resmi">
               <i data-lucide="file" class="w-3 h-3"></i> Surat
             </button>
@@ -2051,8 +2051,12 @@ const App = {
   openTiketModalFromAlur() {
     if (this._selectedAlurIzin) {
       this.closeDetailAlurModal();
-      this.showTiketModal(this._selectedAlurIzin.id);
+      this.openTiketModal(this._selectedAlurIzin.id);
     }
+  },
+
+  showTiketModal(izinId) {
+    return this.openTiketModal(izinId);
   },
 
   async deleteAdminIzin(id) {

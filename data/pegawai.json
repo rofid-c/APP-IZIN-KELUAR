@@ -11,10 +11,10 @@
   },
   {
     "id": "KJ-002",
-    "nama": "Wakil Ketua PA",
+    "nama": "yu",
     "username": "Wakil Ketua PA",
-    "nip": "198005122008011003",
-    "password": "198005122008011003",
+    "nip": "098765",
+    "password": "098765",
     "jabatan": "Wakil Ketua Pengadilan Agama Gunung Sugih",
     "role": "ketua_jabatan",
     "statusAkun": "active",
