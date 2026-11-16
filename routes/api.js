@@ -206,11 +206,11 @@ router.get('/admin/pegawai', (req, res) => {
 
 // POST /api/admin/users — Buat akun baru (Pegawai atau Ketua Jabatan)
 router.post('/admin/users', (req, res) => {
-  const { nama, nip, jabatan, role, statusAkun } = req.body;
+  const { nama, nip } = req.body;
   if (!nama || !nip) {
     return res.status(400).json({ success: false, message: 'Nama dan NIP wajib diisi.' });
   }
-  const result = storage.createUserAdmin({ nama, nip, jabatan, role, statusAkun });
+  const result = storage.createUserAdmin(req.body);
   if (!result.success) return res.status(400).json(result);
   res.status(201).json(result);
 });
@@ -253,6 +253,49 @@ router.get('/admin/izin', (req, res) => {
 // DELETE /api/admin/izin/:id — Hapus record izin (admin)
 router.delete('/admin/izin/:id', (req, res) => {
   const result = storage.deleteIzinAdmin(req.params.id);
+  if (!result.success) return res.status(400).json(result);
+  res.json(result);
+});
+
+// ==========================================
+// MASTER KATEGORI JABATAN
+// ==========================================
+// GET /api/kategori-jabatan
+router.get('/kategori-jabatan', (req, res) => {
+  res.json({ success: true, data: storage.getAllKategoriJabatan() });
+});
+
+// POST /api/kategori-jabatan — Tambah Kategori Baru
+router.post('/kategori-jabatan', (req, res) => {
+  const result = storage.addKategoriJabatan(req.body);
+  if (!result.success) return res.status(400).json(result);
+  res.status(201).json(result);
+});
+
+// PUT /api/kategori-jabatan/:id — Update Kategori
+router.put('/kategori-jabatan/:id', (req, res) => {
+  const result = storage.updateKategoriJabatan(req.params.id, req.body);
+  if (!result.success) return res.status(400).json(result);
+  res.json(result);
+});
+
+// POST /api/kategori-jabatan/:id/jenis — Tambah Jenis Jabatan ke Kategori
+router.post('/kategori-jabatan/:id/jenis', (req, res) => {
+  const result = storage.addJenisToKategori(req.params.id, req.body.namaJenis);
+  if (!result.success) return res.status(400).json(result);
+  res.status(201).json(result);
+});
+
+// DELETE /api/kategori-jabatan/:id/jenis — Hapus Jenis Jabatan dari Kategori
+router.delete('/kategori-jabatan/:id/jenis', (req, res) => {
+  const result = storage.deleteJenisFromKategori(req.params.id, req.body.namaJenis);
+  if (!result.success) return res.status(400).json(result);
+  res.json(result);
+});
+
+// DELETE /api/kategori-jabatan/:id — Hapus Kategori
+router.delete('/kategori-jabatan/:id', (req, res) => {
+  const result = storage.deleteKategoriJabatan(req.params.id);
   if (!result.success) return res.status(400).json(result);
   res.json(result);
 });

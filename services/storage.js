@@ -4,10 +4,81 @@ const path = require('path');
 const DATA_DIR = path.join(__dirname, '..', 'data');
 const PEGAWAI_FILE = path.join(DATA_DIR, 'pegawai.json');
 const IZIN_FILE = path.join(DATA_DIR, 'izin.json');
+const KATEGORI_FILE = path.join(DATA_DIR, 'kategori_jabatan.json');
 
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
+
+// Master Kategori & Jenis Jabatan Resmi Pengadilan Agama Gunung Sugih
+const DEFAULT_KATEGORI_JABATAN = [
+  {
+    id: "kat-pimpinan",
+    nama: "Pimpinan Pengadilan",
+    peran: "ketua_jabatan",
+    isLocked: true,
+    jenis: [
+      "Ketua Pengadilan Agama Gunung Sugih",
+      "Wakil Ketua Pengadilan Agama Gunung Sugih"
+    ]
+  },
+  {
+    id: "kat-panitera",
+    nama: "Panitera",
+    peran: "ketua_jabatan",
+    isLocked: false,
+    jenis: [
+      "Panitera Pengadilan Agama Gunung Sugih"
+    ]
+  },
+  {
+    id: "kat-sekretaris",
+    nama: "Sekretaris",
+    peran: "ketua_jabatan",
+    isLocked: false,
+    jenis: [
+      "Sekretaris Pengadilan Agama Gunung Sugih"
+    ]
+  },
+  {
+    id: "kat-panmub",
+    nama: "Panmub (Panitera Muda)",
+    peran: "ketua_jabatan",
+    isLocked: false,
+    jenis: [
+      "Panitera Muda Permohonan",
+      "Panitera Muda Gugatan",
+      "Panitera Muda Hukum"
+    ]
+  },
+  {
+    id: "kat-kasubbag",
+    nama: "Kassubag (Kepala Sub Bagian)",
+    peran: "ketua_jabatan",
+    isLocked: false,
+    jenis: [
+      "Kasubbag Kepegawaian, Organisasi, dan Tata Laksana",
+      "Kasubbag Perencanaan, Teknologi Informasi, dan Pelaporan",
+      "Kasubbag Umum dan Keuangan"
+    ]
+  },
+  {
+    id: "kat-pegawai",
+    nama: "Fungsional & Pelaksana Pegawai",
+    peran: "pegawai",
+    isLocked: false,
+    jenis: [
+      "Panitera Pengganti",
+      "Jurusita",
+      "Jurusita Pengganti",
+      "Pranata Komputer",
+      "Pengelola Perkara",
+      "Pengadministrasi Registrasi Perkara",
+      "Resepsionis / Petugas PTSP",
+      "PPNPN / Pramubakti"
+    ]
+  }
+];
 
 // Akun Contoh: 1 Pegawai & 1 Ketua Jabatan
 const DEFAULT_USERS = [
@@ -502,6 +573,8 @@ const storage = {
       nip: cleanNip,
       password: cleanNip,
       jabatan,
+      kategoriId: payload.kategoriId || null,
+      kategoriNama: payload.kategoriNama || null,
       role,
       statusAkun,
       createdAt: new Date().toISOString()
@@ -567,14 +640,105 @@ const storage = {
     if (payload.jabatan) user.jabatan = payload.jabatan.trim();
     if (payload.role) user.role = payload.role;
     if (payload.statusAkun) user.statusAkun = payload.statusAkun;
+    if (payload.kategoriId !== undefined) user.kategoriId = payload.kategoriId;
+    if (payload.kategoriNama !== undefined) user.kategoriNama = payload.kategoriNama;
 
     list[index] = user;
     writeJSON(PEGAWAI_FILE, list);
     return {
       success: true,
-      message: `Data akun ${user.nama} berhasil diperbarui.`,
+      message: `Akun ${user.nama} berhasil diperbarui.`,
       user
     };
+  },
+
+  // ==========================================
+  // MASTER KATEGORI & JENIS JABATAN
+  // ==========================================
+  getAllKategoriJabatan() {
+    return readJSON(KATEGORI_FILE, DEFAULT_KATEGORI_JABATAN);
+  },
+
+  addKategoriJabatan({ nama, peran = 'ketua_jabatan', jenis = [] }) {
+    const list = this.getAllKategoriJabatan();
+    const cleanNama = (nama || '').trim();
+    if (!cleanNama) {
+      return { success: false, message: 'Nama kategori wajib diisi.' };
+    }
+    const exists = list.some(k => (k.nama || '').toLowerCase() === cleanNama.toLowerCase());
+    if (exists) {
+      return { success: false, message: `Kategori "${cleanNama}" sudah ada.` };
+    }
+    const id = 'kat-' + cleanNama.toLowerCase().replace(/[^a-z0-9]/g, '-').slice(0, 20) + '-' + Date.now().toString().slice(-4);
+    const cleanJenis = Array.isArray(jenis) ? jenis.map(j => (j || '').trim()).filter(Boolean) : [];
+    const newKat = {
+      id,
+      nama: cleanNama,
+      peran: peran || 'ketua_jabatan',
+      isLocked: false,
+      jenis: cleanJenis.length > 0 ? cleanJenis : [cleanNama]
+    };
+    list.push(newKat);
+    writeJSON(KATEGORI_FILE, list);
+    return { success: true, message: `Kategori "${cleanNama}" berhasil ditambahkan.`, data: newKat };
+  },
+
+  updateKategoriJabatan(id, { nama, peran, jenis }) {
+    const list = this.getAllKategoriJabatan();
+    const idx = list.findIndex(k => k.id === id);
+    if (idx === -1) {
+      return { success: false, message: 'Kategori tidak ditemukan.' };
+    }
+    if (nama !== undefined) list[idx].nama = (nama || '').trim();
+    if (peran !== undefined) list[idx].peran = peran;
+    if (Array.isArray(jenis)) {
+      list[idx].jenis = jenis.map(j => (j || '').trim()).filter(Boolean);
+    }
+    writeJSON(KATEGORI_FILE, list);
+    return { success: true, message: 'Kategori jabatan berhasil diperbarui.', data: list[idx] };
+  },
+
+  addJenisToKategori(kategoriId, namaJenis) {
+    const list = this.getAllKategoriJabatan();
+    const idx = list.findIndex(k => k.id === kategoriId);
+    if (idx === -1) {
+      return { success: false, message: 'Kategori tidak ditemukan.' };
+    }
+    const cleanJenis = (namaJenis || '').trim();
+    if (!cleanJenis) {
+      return { success: false, message: 'Nama jenis jabatan wajib diisi.' };
+    }
+    if (!Array.isArray(list[idx].jenis)) list[idx].jenis = [];
+    if (!list[idx].jenis.includes(cleanJenis)) {
+      list[idx].jenis.push(cleanJenis);
+      writeJSON(KATEGORI_FILE, list);
+    }
+    return { success: true, message: `Jenis jabatan "${cleanJenis}" berhasil ditambahkan ke ${list[idx].nama}.`, data: list[idx] };
+  },
+
+  deleteJenisFromKategori(kategoriId, namaJenis) {
+    const list = this.getAllKategoriJabatan();
+    const idx = list.findIndex(k => k.id === kategoriId);
+    if (idx === -1) {
+      return { success: false, message: 'Kategori tidak ditemukan.' };
+    }
+    list[idx].jenis = (list[idx].jenis || []).filter(j => j !== namaJenis);
+    writeJSON(KATEGORI_FILE, list);
+    return { success: true, message: `Jenis jabatan berhasil dihapus dari ${list[idx].nama}.`, data: list[idx] };
+  },
+
+  deleteKategoriJabatan(id) {
+    let list = this.getAllKategoriJabatan();
+    const target = list.find(k => k.id === id);
+    if (!target) {
+      return { success: false, message: 'Kategori tidak ditemukan.' };
+    }
+    if (target.isLocked) {
+      return { success: false, message: 'Kategori sistem utama tidak dapat dihapus.' };
+    }
+    list = list.filter(k => k.id !== id);
+    writeJSON(KATEGORI_FILE, list);
+    return { success: true, message: 'Kategori berhasil dihapus.' };
   },
 
   // Hapus akun (baik pegawai maupun ketua jabatan)

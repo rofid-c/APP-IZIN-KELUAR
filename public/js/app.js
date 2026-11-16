@@ -1860,6 +1860,7 @@ const App = {
   async loadAdminDashboard() {
     await this.loadAdminStats();
     await this.loadAdminUsers();
+    await this.loadKategoriJabatan();
     await this.loadAdminAlur();
     await this.loadAdminRecentTimeline();
     this.switchAdminTab(this._adminCurrentTab || 'users');
@@ -2087,26 +2088,327 @@ const App = {
     this.renderUsersTable();
   },
 
+  // Toggle Collapse Filter Baris Bawah (Dinaikkan Tutup / Dilihat ke Bawah)
+  _isUserFilterCollapsed: false,
+  toggleUserFilterCollapse() {
+    this._isUserFilterCollapsed = !this._isUserFilterCollapsed;
+    const wrapper = document.getElementById('wrapperUserFilters');
+    const label = document.getElementById('labelToggleUserFilter');
+    const icon = document.getElementById('iconToggleUserFilter');
+
+    if (this._isUserFilterCollapsed) {
+      if (wrapper) wrapper.classList.add('hidden');
+      if (label) label.textContent = 'Buka Filter';
+      if (icon) icon.setAttribute('data-lucide', 'chevron-down');
+    } else {
+      if (wrapper) wrapper.classList.remove('hidden');
+      if (label) label.textContent = 'Filter Akun';
+      if (icon) icon.setAttribute('data-lucide', 'chevron-up');
+    }
+    lucide.createIcons();
+  },
+
+  // ==========================================
+  // MASTER KATEGORI & JENIS JABATAN ADMIN
+  // ==========================================
+  _allKategoriJabatan: [],
+
+  async loadKategoriJabatan() {
+    try {
+      const res = await fetch('/api/kategori-jabatan');
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        this._allKategoriJabatan = json.data;
+        this.renderKategoriList();
+      }
+    } catch (e) {
+      console.error('Gagal memuat kategori jabatan:', e);
+    }
+  },
+
+  renderKategoriList() {
+    const container = document.getElementById('kategoriListContainer');
+    if (!container) return;
+
+    if (!this._allKategoriJabatan || this._allKategoriJabatan.length === 0) {
+      container.innerHTML = `<div class="p-6 text-center text-slate-400 bg-slate-50 rounded-xl">Belum ada kategori jabatan.</div>`;
+      return;
+    }
+
+    container.innerHTML = this._allKategoriJabatan.map(k => {
+      const isKetua = k.peran === 'ketua_jabatan';
+      const badgeRole = isKetua
+        ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300">⚖️ Ketua Jabatan</span>`
+        : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">👤 Pegawai</span>`;
+
+      const jenisTags = (k.jenis || []).map(j => `
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-white border border-slate-200 text-slate-800 shadow-2xs">
+          <span>${j}</span>
+          ${!k.isLocked ? `<button type="button" onclick="App.deleteJenisKategori('${k.id}', '${j.replace(/'/g, "\\'")}')" class="text-slate-400 hover:text-red-600 transition font-bold" title="Hapus jenis jabatan">×</button>` : ''}
+        </span>
+      `).join('');
+
+      return `
+        <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-slate-900 text-xs">${k.nama}</span>
+              ${badgeRole}
+            </div>
+            ${!k.isLocked ? `
+              <button type="button" onclick="App.deleteKategori('${k.id}', '${k.nama.replace(/'/g, "\\'")}')"
+                class="text-xs text-red-500 hover:text-red-700 font-semibold flex items-center gap-1 transition">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Hapus Kategori
+              </button>
+            ` : `<span class="text-[10px] text-slate-400 italic">Kategori Pokok Sistem</span>`}
+          </div>
+
+          <!-- List Jenis Jabatan -->
+          <div class="flex flex-wrap gap-1.5">
+            ${jenisTags || '<span class="text-[11px] text-slate-400 italic">Belum ada jenis jabatan terdaftar</span>'}
+          </div>
+
+          <!-- Input Cepat Tambah Jenis Jabatan -->
+          <div class="pt-2 border-t border-slate-200/70 flex items-center gap-2">
+            <input type="text" id="inputJenis_${k.id}" placeholder="Tambah jenis jabatan untuk ${k.nama}..."
+              class="flex-1 px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-600 font-medium">
+            <button type="button" onclick="App.submitAddJenisKategori('${k.id}')"
+              class="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 shrink-0">
+              <i data-lucide="plus" class="w-3 h-3"></i> Tambah Jenis
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    lucide.createIcons();
+  },
+
+  async openKelolaKategoriModal() {
+    await this.loadKategoriJabatan();
+    const modal = document.getElementById('modalKelolaKategori');
+    if (modal) modal.classList.remove('modal-hidden');
+    lucide.createIcons();
+  },
+
+  closeKelolaKategoriModal() {
+    const modal = document.getElementById('modalKelolaKategori');
+    if (modal) modal.classList.add('modal-hidden');
+
+    // Jika modalAddUser sedang aktif, segarkan dropdown kategori
+    const addUserModal = document.getElementById('modalAddUser');
+    if (addUserModal && !addUserModal.classList.contains('modal-hidden')) {
+      const currentRole = document.querySelector('input[name="newUserRole"]:checked')?.value || 'pegawai';
+      const currentKatId = document.getElementById('newUserKategori')?.value;
+      const currentJenis = document.getElementById('newUserJenisJabatan')?.value;
+      this.renderKategoriOptions(currentRole, currentKatId, currentJenis);
+    }
+  },
+
+  async submitAddKategori(e) {
+    e.preventDefault();
+    const nama = document.getElementById('newKategoriNama').value.trim();
+    const peran = document.getElementById('newKategoriPeran').value;
+    if (!nama) return;
+
+    try {
+      const res = await fetch('/api/kategori-jabatan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nama, peran })
+      });
+      const json = await res.json();
+      if (json.success) {
+        this.showToast(json.message, 'success');
+        document.getElementById('newKategoriNama').value = '';
+        await this.loadKategoriJabatan();
+      } else {
+        this.showToast(json.message || 'Gagal menambah kategori.', 'error');
+      }
+    } catch (err) {
+      this.showToast('Terjadi kesalahan jaringan.', 'error');
+    }
+  },
+
+  async submitAddJenisKategori(katId) {
+    const input = document.getElementById(`inputJenis_${katId}`);
+    if (!input) return;
+    const namaJenis = input.value.trim();
+    if (!namaJenis) {
+      this.showToast('Ketik nama jenis jabatan terlebih dahulu.', 'warning');
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/kategori-jabatan/${katId}/jenis`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ namaJenis })
+      });
+      const json = await res.json();
+      if (json.success) {
+        this.showToast(json.message, 'success');
+        input.value = '';
+        await this.loadKategoriJabatan();
+      } else {
+        this.showToast(json.message || 'Gagal menambah jenis jabatan.', 'error');
+      }
+    } catch (err) {
+      this.showToast('Gagal menghubungi server.', 'error');
+    }
+  },
+
+  async deleteJenisKategori(katId, namaJenis) {
+    try {
+      const res = await fetch(`/api/kategori-jabatan/${katId}/jenis`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ namaJenis })
+      });
+      const json = await res.json();
+      if (json.success) {
+        this.showToast(json.message, 'success');
+        await this.loadKategoriJabatan();
+      } else {
+        this.showToast(json.message || 'Gagal menghapus jenis jabatan.', 'error');
+      }
+    } catch (err) {
+      this.showToast('Gagal menghubungi server.', 'error');
+    }
+  },
+
+  async deleteKategori(katId, nama) {
+    if (!confirm(`Hapus kategori "${nama}" beserta seluruh jenis jabatannya?`)) return;
+
+    try {
+      const res = await fetch(`/api/kategori-jabatan/${katId}`, { method: 'DELETE' });
+      const json = await res.json();
+      if (json.success) {
+        this.showToast(json.message, 'success');
+        await this.loadKategoriJabatan();
+      } else {
+        this.showToast(json.message || 'Gagal menghapus kategori.', 'error');
+      }
+    } catch (err) {
+      this.showToast('Gagal menghubungi server.', 'error');
+    }
+  },
+
+  // Sinkronisasi Dropdown Kategori Jabatan di Modal Tambah/Ubah Akun
+  renderKategoriOptions(role, selectedKategoriId = null, selectedJabatan = null) {
+    const selKategori = document.getElementById('newUserKategori');
+    if (!selKategori) return;
+
+    // Filter kategori berdasarkan peran akun (ketua_jabatan vs pegawai)
+    const list = (this._allKategoriJabatan || []).filter(k => k.peran === role || !k.peran);
+
+    selKategori.innerHTML = '<option value="">-- Pilih Kategori Jabatan --</option>' +
+      list.map(k => `<option value="${k.id}">${k.nama}</option>`).join('');
+
+    // Cari kategori yang cocok jika ada selectedJabatan
+    let matchedKatId = selectedKategoriId;
+    if (!matchedKatId && selectedJabatan) {
+      const found = list.find(k => (k.jenis || []).some(j => j.toLowerCase() === selectedJabatan.toLowerCase()));
+      if (found) matchedKatId = found.id;
+    }
+
+    if (matchedKatId && list.some(k => k.id === matchedKatId)) {
+      selKategori.value = matchedKatId;
+    } else if (list.length > 0 && !selectedJabatan) {
+      selKategori.value = list[0].id;
+    }
+
+    this.onKategoriChange(selKategori.value, selectedJabatan);
+  },
+
+  onKategoriChange(kategoriId, selectedJabatan = null) {
+    const selJenis = document.getElementById('newUserJenisJabatan');
+    const customWrap = document.getElementById('wrapperJabatanCustom');
+    const customInput = document.getElementById('newUserJabatanCustom');
+    if (!selJenis) return;
+
+    const kat = (this._allKategoriJabatan || []).find(k => k.id === kategoriId);
+    const jenisList = (kat && Array.isArray(kat.jenis)) ? kat.jenis : [];
+
+    selJenis.innerHTML = '<option value="">-- Pilih Jenis Jabatan --</option>' +
+      jenisList.map(j => `<option value="${j}">${j}</option>`).join('') +
+      '<option value="__custom__">✏️ Jenis Lainnya (Ketik Manual)...</option>';
+
+    if (selectedJabatan) {
+      if (jenisList.includes(selectedJabatan)) {
+        selJenis.value = selectedJabatan;
+        if (customWrap) customWrap.classList.add('hidden');
+      } else {
+        selJenis.value = '__custom__';
+        if (customWrap) customWrap.classList.remove('hidden');
+        if (customInput) customInput.value = selectedJabatan;
+      }
+    } else {
+      if (jenisList.length > 0) {
+        selJenis.value = jenisList[0];
+      }
+      if (customWrap) customWrap.classList.add('hidden');
+      if (customInput) customInput.value = '';
+    }
+  },
+
+  onJenisJabatanChange(value) {
+    const customWrap = document.getElementById('wrapperJabatanCustom');
+    const customInput = document.getElementById('newUserJabatanCustom');
+
+    if (value === '__custom__') {
+      if (customWrap) customWrap.classList.remove('hidden');
+      if (customInput) {
+        customInput.focus();
+        if (!customInput.value) customInput.placeholder = 'Ketik nama jabatan resmi lengkap...';
+      }
+    } else {
+      if (customWrap) customWrap.classList.add('hidden');
+    }
+  },
+
+  onRoleChange(role) {
+    const title = document.getElementById('modalAddUserTitle');
+    const subtitle = document.getElementById('modalAddUserSubtitle');
+    const isEdit = !!document.getElementById('editUserId')?.value;
+
+    if (role === 'ketua_jabatan') {
+      if (!isEdit && title) title.textContent = 'Tambah Akun Ketua Jabatan';
+      if (!isEdit && subtitle) subtitle.textContent = 'Pilih kategori (Panitera, Kassubag, Panmub, dll) dan jenis jabatannya';
+    } else {
+      if (!isEdit && title) title.textContent = 'Tambah Akun Pegawai Baru';
+      if (!isEdit && subtitle) subtitle.textContent = 'Lengkapi data pegawai dan jenis jabatannya';
+    }
+
+    const currentKatId = document.getElementById('newUserKategori')?.value;
+    const currentJenis = document.getElementById('newUserJenisJabatan')?.value;
+    this.renderKategoriOptions(role, currentKatId, currentJenis);
+  },
+
   // Modal Tambah / Ubah Akun
-  openAddUserModal(defaultRole = 'pegawai') {
+  async openAddUserModal(defaultRole = 'pegawai') {
     const modal = document.getElementById('modalAddUser');
     if (!modal) return;
     document.getElementById('formAddUser').reset();
     document.getElementById('editUserId').value = '';
     document.getElementById('modalAddUserTitle').textContent = 'Tambah Akun Baru';
-    document.getElementById('modalAddUserSubtitle').textContent = 'Pilih peran (Ketua Jabatan atau Pegawai) dan lengkapi data';
+    document.getElementById('modalAddUserSubtitle').textContent = 'Pilih peran (Ketua Jabatan atau Pegawai) dan tentukan kategori jabatannya';
 
     const roleRadios = document.querySelectorAll('input[name="newUserRole"]');
     roleRadios.forEach(r => {
       r.checked = (r.value === defaultRole);
     });
+
+    if (!this._allKategoriJabatan || this._allKategoriJabatan.length === 0) {
+      await this.loadKategoriJabatan();
+    }
     this.onRoleChange(defaultRole);
 
     modal.classList.remove('modal-hidden');
     lucide.createIcons();
   },
 
-  openEditUserModal(id) {
+  async openEditUserModal(id) {
     const user = this._adminAllUsers.find(u => u.id === id);
     if (!user) return;
     const modal = document.getElementById('modalAddUser');
@@ -2123,9 +2425,13 @@ const App = {
     
     document.getElementById('newUserName').value = user.nama || '';
     document.getElementById('newUserNip').value = user.nip || '';
-    document.getElementById('newUserJabatan').value = user.jabatan || '';
     document.getElementById('newUserStatus').value = user.statusAkun || 'active';
     
+    if (!this._allKategoriJabatan || this._allKategoriJabatan.length === 0) {
+      await this.loadKategoriJabatan();
+    }
+    this.renderKategoriOptions(user.role, user.kategoriId, user.jabatan);
+
     modal.classList.remove('modal-hidden');
     lucide.createIcons();
   },
@@ -2135,28 +2441,32 @@ const App = {
     if (modal) modal.classList.add('modal-hidden');
   },
 
-  onRoleChange(role) {
-    const title = document.getElementById('modalAddUserTitle');
-    const jabatanInput = document.getElementById('newUserJabatan');
-    const isEdit = !!document.getElementById('editUserId')?.value;
-
-    if (role === 'ketua_jabatan') {
-      if (!isEdit && title) title.textContent = 'Tambah Pimpinan Baru (Ketua / Wakil)';
-      if (!isEdit && jabatanInput && !jabatanInput.value) jabatanInput.value = 'Ketua Pengadilan Agama Gunung Sugih';
-    } else {
-      if (!isEdit && title) title.textContent = 'Tambah Akun Pegawai Baru';
-      if (!isEdit && jabatanInput && jabatanInput.value === 'Ketua Pengadilan Agama Gunung Sugih') jabatanInput.value = '';
-    }
-  },
-
   async submitAddUser(e) {
     e.preventDefault();
     const editId = document.getElementById('editUserId')?.value;
     const role = document.querySelector('input[name="newUserRole"]:checked')?.value || 'pegawai';
     const nama = document.getElementById('newUserName').value.trim();
     const nip = document.getElementById('newUserNip').value.trim();
-    const jabatan = document.getElementById('newUserJabatan').value.trim();
     const statusAkun = document.getElementById('newUserStatus').value;
+
+    const selKategori = document.getElementById('newUserKategori');
+    const kategoriId = selKategori ? selKategori.value : '';
+    const kategoriNama = selKategori && selKategori.selectedIndex >= 0 ? selKategori.options[selKategori.selectedIndex].text : '';
+
+    const selJenis = document.getElementById('newUserJenisJabatan');
+    const jenisVal = selJenis ? selJenis.value : '';
+    let jabatan = '';
+
+    if (jenisVal === '__custom__') {
+      jabatan = (document.getElementById('newUserJabatanCustom')?.value || '').trim();
+    } else {
+      jabatan = (jenisVal || '').trim();
+    }
+
+    if (!jabatan) {
+      this.showToast('Harap pilih atau isi jenis jabatan resmi.', 'warning');
+      return;
+    }
 
     const isEdit = !!editId;
     const url = isEdit ? `/api/admin/users/${editId}` : '/api/admin/users';
@@ -2166,7 +2476,7 @@ const App = {
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nama, nip, jabatan, role, statusAkun })
+        body: JSON.stringify({ nama, nip, jabatan, role, statusAkun, kategoriId, kategoriNama })
       });
       const json = await res.json();
       if (!json.success) {

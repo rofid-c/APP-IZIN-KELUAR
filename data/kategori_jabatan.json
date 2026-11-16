@@ -1,0 +1,68 @@
+[
+  {
+    "id": "kat-pimpinan",
+    "nama": "Pimpinan Pengadilan",
+    "peran": "ketua_jabatan",
+    "isLocked": true,
+    "jenis": [
+      "Ketua Pengadilan Agama Gunung Sugih",
+      "Wakil Ketua Pengadilan Agama Gunung Sugih"
+    ]
+  },
+  {
+    "id": "kat-panitera",
+    "nama": "Panitera",
+    "peran": "ketua_jabatan",
+    "isLocked": false,
+    "jenis": [
+      "Panitera Pengadilan Agama Gunung Sugih"
+    ]
+  },
+  {
+    "id": "kat-sekretaris",
+    "nama": "Sekretaris",
+    "peran": "ketua_jabatan",
+    "isLocked": false,
+    "jenis": [
+      "Sekretaris Pengadilan Agama Gunung Sugih"
+    ]
+  },
+  {
+    "id": "kat-panmub",
+    "nama": "Panmub (Panitera Muda)",
+    "peran": "ketua_jabatan",
+    "isLocked": false,
+    "jenis": [
+      "Panitera Muda Permohonan",
+      "Panitera Muda Gugatan",
+      "Panitera Muda Hukum"
+    ]
+  },
+  {
+    "id": "kat-kasubbag",
+    "nama": "Kassubag (Kepala Sub Bagian)",
+    "peran": "ketua_jabatan",
+    "isLocked": false,
+    "jenis": [
+      "Kasubbag Kepegawaian, Organisasi, dan Tata Laksana",
+      "Kasubbag Perencanaan, Teknologi Informasi, dan Pelaporan",
+      "Kasubbag Umum dan Keuangan"
+    ]
+  },
+  {
+    "id": "kat-pegawai",
+    "nama": "Fungsional & Pelaksana Pegawai",
+    "peran": "pegawai",
+    "isLocked": false,
+    "jenis": [
+      "Panitera Pengganti",
+      "Jurusita",
+      "Jurusita Pengganti",
+      "Pranata Komputer",
+      "Pengelola Perkara",
+      "Pengadministrasi Registrasi Perkara",
+      "Resepsionis / Petugas PTSP",
+      "PPNPN / Pramubakti"
+    ]
+  }
+]
