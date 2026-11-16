@@ -1189,20 +1189,20 @@ const App = {
       if (isPimpinan) {
         // ========================================================
         // FORMAT SURAT IZIN PIMPINAN (KETUA / WAKIL)
-        // Mandiri: Tidak ke siapa-siapa, langsung disahkan sistem
+        // Mandiri: Tidak ke siapa-siapa, tanda tangan tunggal pimpinan
         // ========================================================
         if (labelAtasan) labelAtasan.textContent = 'Yang bertandatangan di bawah ini';
         if (atasanInfoEl) atasanInfoEl.textContent = item.pegawaiNama;
         if (labelPemohon) labelPemohon.textContent = 'Jabatan / NIP';
         if (pemohonInfoEl) pemohonInfoEl.textContent = `${item.pegawaiJabatan} / NIP. ${item.pegawaiNip || '-'}`;
         if (kalimatPenutupEl) {
-          kalimatPenutupEl.textContent = 'Demikian izin keluar kantor ini dibuat dan disetujui secara resmi melalui sistem untuk digunakan sebagaimana mestinya.';
+          kalimatPenutupEl.textContent = 'Demikian izin keluar kantor ini dibuat untuk digunakan sebagaimana mestinya.';
         }
 
-        // Kolom Kiri: Tampilkan Stamp Validasi Sistem Otomatis
+        // Kolom Kiri: Dikosongkan (bagian ACC sistem tidak ditampilkan di surat)
         if (boxKiriStandard) boxKiriStandard.classList.add('hidden');
-        if (stampPimpinan) stampPimpinan.classList.remove('hidden');
-        if (stampKode) stampKode.textContent = `No: ${item.kodeSurat || item.id}`;
+        if (stampPimpinan) stampPimpinan.classList.add('hidden');
+        if (stampKode) stampKode.textContent = '';
 
         // Kolom Kanan: Tanda Tangan Resmi Pejabat Pimpinan Bersangkutan
         if (tanggalTempatEl) tanggalTempatEl.textContent = `Gunung Sugih, ${formatDateIndo(item.tanggalIzin)}`;
