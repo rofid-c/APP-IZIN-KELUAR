@@ -10,6 +10,17 @@
     "statusAkun": "active"
   },
   {
+    "id": "KJ-002",
+    "nama": "Wakil Ketua PA",
+    "username": "Wakil Ketua PA",
+    "nip": "198005122008011003",
+    "password": "198005122008011003",
+    "jabatan": "Wakil Ketua Pengadilan Agama Gunung Sugih",
+    "role": "ketua_jabatan",
+    "statusAkun": "active",
+    "createdAt": "2026-11-16T08:00:00.000Z"
+  },
+  {
     "id": "PEG-0485",
     "nama": "tr",
     "username": "tr",
@@ -19,16 +30,5 @@
     "role": "pegawai",
     "statusAkun": "active",
     "createdAt": "2026-11-12T03:42:20.485Z"
-  },
-  {
-    "id": "PEG-1263",
-    "nama": "yt",
-    "username": "yt",
-    "nip": "7654321",
-    "password": "7654321",
-    "jabatan": "ob",
-    "role": "pegawai",
-    "statusAkun": "active",
-    "createdAt": "2026-11-12T03:43:01.263Z"
   }
 ]

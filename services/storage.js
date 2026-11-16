@@ -32,6 +32,17 @@ const DEFAULT_USERS = [
     role: "ketua_jabatan",
     statusAkun: "active",
     createdAt: "2026-11-01T08:00:00.000Z"
+  },
+  {
+    id: "KJ-002",
+    nama: "Wakil Ketua PA",
+    username: "Wakil Ketua PA",
+    nip: "198005122008011003",
+    password: "198005122008011003",
+    jabatan: "Wakil Ketua Pengadilan Agama Gunung Sugih",
+    role: "ketua_jabatan",
+    statusAkun: "active",
+    createdAt: "2026-11-01T08:00:00.000Z"
   }
 ];
 
@@ -42,6 +53,13 @@ const DEFAULT_KETUA_JABATAN = [
     nama: "Dr. H. Ahmad Zarkasi, S.H.I., M.H.",
     nip: "197405102001121001",
     jabatan: "Ketua Pengadilan Agama Gunung Sugih",
+    statusAkun: "active"
+  },
+  {
+    id: "KJ-002",
+    nama: "Wakil Ketua PA",
+    nip: "198005122008011003",
+    jabatan: "Wakil Ketua Pengadilan Agama Gunung Sugih",
     statusAkun: "active"
   }
 ];
@@ -566,12 +584,12 @@ const storage = {
     if (index === -1) return { success: false, message: 'Akun tidak ditemukan.' };
 
     const user = list[index];
-    // Proteksi: jangan sampai tidak ada ketua jabatan sama sekali
+    // Proteksi: Akun Pimpinan (Ketua & Wakil Ketua) bersifat permanen dan tidak dapat dihapus, hanya dapat diedit
     if (user.role === 'ketua_jabatan') {
-      const remainingKetua = list.filter(p => p.role === 'ketua_jabatan' && p.id !== id);
-      if (remainingKetua.length === 0) {
-        return { success: false, message: 'Tidak dapat menghapus satu-satunya Ketua Jabatan di sistem.' };
-      }
+      return {
+        success: false,
+        message: 'Akun Pimpinan (Ketua & Wakil Ketua) bersifat permanen dan tidak dapat dihapus, hanya dapat diubah (edit).'
+      };
     }
 
     const nama = user.nama;
