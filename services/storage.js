@@ -730,18 +730,32 @@ const storage = {
     return { success: true, message: 'Kategori berhasil dihapus.' };
   },
 
-  // Hapus akun (baik pegawai maupun ketua jabatan)
+  // Helper cek apakah akun merupakan Pimpinan Pokok Pengadilan (Ketua & Wakil Ketua PA)
+  isPimpinanPengadilan(user) {
+    if (!user) return false;
+    if (user.id === 'KJ-001' || user.id === 'KJ-002') return true;
+    if (user.kategoriId === 'kat-pimpinan') return true;
+    if (user.jabatan) {
+      const j = user.jabatan.trim().toLowerCase();
+      if (j === 'ketua pengadilan agama gunung sugih' || j === 'wakil ketua pengadilan agama gunung sugih') {
+        return true;
+      }
+    }
+    return false;
+  },
+
+  // Hapus akun (baik pegawai maupun pejabat, kecuali akun Pimpinan Pengadilan)
   deleteUserAdmin(id) {
     const list = readJSON(PEGAWAI_FILE, DEFAULT_USERS);
     const index = list.findIndex(p => p.id === id);
     if (index === -1) return { success: false, message: 'Akun tidak ditemukan.' };
 
     const user = list[index];
-    // Proteksi: Akun Pimpinan (Ketua & Wakil Ketua) bersifat permanen dan tidak dapat dihapus, hanya dapat diedit
-    if (user.role === 'ketua_jabatan') {
+    // Proteksi: Hanya Akun Pimpinan Pengadilan (Ketua & Wakil Ketua) yang bersifat permanen dan tidak dapat dihapus
+    if (this.isPimpinanPengadilan(user)) {
       return {
         success: false,
-        message: 'Akun Pimpinan (Ketua & Wakil Ketua) bersifat permanen dan tidak dapat dihapus, hanya dapat diubah (edit).'
+        message: 'Akun Pimpinan Pengadilan (Ketua & Wakil Ketua) bersifat permanen dan tidak dapat dihapus, hanya dapat diubah (edit).'
       };
     }
 

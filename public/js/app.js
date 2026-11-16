@@ -2006,6 +2006,12 @@ const App = {
 
     tbody.innerHTML = list.map(u => {
       const isKetua = u.role === 'ketua_jabatan';
+      const isPimpinan = u.id === 'KJ-001' || u.id === 'KJ-002' || u.kategoriId === 'kat-pimpinan' ||
+        (u.jabatan && (
+          u.jabatan.trim().toLowerCase() === 'ketua pengadilan agama gunung sugih' ||
+          u.jabatan.trim().toLowerCase() === 'wakil ketua pengadilan agama gunung sugih'
+        ));
+
       const roleBadge = isKetua
         ? '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-50 text-amber-800 border border-amber-200">⚖️ Pejabat</span>'
         : '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-50 text-blue-800 border border-blue-200">👤 Pegawai Nonpejabat</span>';
@@ -2039,10 +2045,10 @@ const App = {
           <td class="px-5 py-3.5 text-center">${statusBadge}</td>
           <td class="px-5 py-3.5 text-right">
             <div class="flex items-center justify-end gap-1.5">
-              ${isKetua ? `
-                <!-- Akun Pimpinan (Ketua & Wakil Ketua): Tidak bisa dihapus, hanya bisa edit -->
+              ${isPimpinan ? `
+                <!-- Akun Pimpinan Pengadilan (Ketua & Wakil Ketua): Tidak bisa dihapus, hanya bisa edit -->
                 <button onclick="App.openEditUserModal('${u.id}')"
-                  class="px-2.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 hover:text-emerald-800 bg-slate-100 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 transition flex items-center gap-1 shadow-2xs" title="Ubah Data Akun">
+                  class="px-2.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 hover:text-emerald-800 bg-slate-100 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 transition flex items-center gap-1 shadow-2xs" title="Ubah Data Akun (Pimpinan Pengadilan)">
                   <i data-lucide="pencil" class="w-3.5 h-3.5 text-slate-500"></i>
                   <span>Edit</span>
                 </button>

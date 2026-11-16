@@ -6,6 +6,8 @@
     "nip": "565645",
     "password": "565645",
     "jabatan": "Ketua Pengadilan Agama Gunung Sugih",
+    "kategoriId": "kat-pimpinan",
+    "kategoriNama": "Pimpinan Pengadilan",
     "role": "ketua_jabatan",
     "statusAkun": "active"
   },
@@ -16,6 +18,8 @@
     "nip": "098765",
     "password": "098765",
     "jabatan": "Wakil Ketua Pengadilan Agama Gunung Sugih",
+    "kategoriId": "kat-pimpinan",
+    "kategoriNama": "Pimpinan Pengadilan",
     "role": "ketua_jabatan",
     "statusAkun": "active",
     "createdAt": "2026-11-16T08:00:00.000Z"
@@ -27,6 +31,8 @@
     "nip": "12345678",
     "password": "12345678",
     "jabatan": "resepsionis",
+    "kategoriId": "kat-pegawai",
+    "kategoriNama": "Fungsional & Pelaksana Pegawai",
     "role": "pegawai",
     "statusAkun": "active",
     "createdAt": "2026-11-12T03:42:20.485Z"
