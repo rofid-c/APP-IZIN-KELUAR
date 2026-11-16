@@ -1994,8 +1994,8 @@ const App = {
     tbody.innerHTML = list.map(u => {
       const isKetua = u.role === 'ketua_jabatan';
       const roleBadge = isKetua
-        ? '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-50 text-amber-800 border border-amber-200">⚖️ Ketua Jabatan</span>'
-        : '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-50 text-blue-800 border border-blue-200">👤 Pegawai</span>';
+        ? '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-50 text-amber-800 border border-amber-200">⚖️ Pejabat</span>'
+        : '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-50 text-blue-800 border border-blue-200">👤 Pegawai Nonpejabat</span>';
 
       let statusBadge = '';
       if (u.statusAkun === 'active') {
@@ -2138,8 +2138,8 @@ const App = {
     container.innerHTML = this._allKategoriJabatan.map(k => {
       const isKetua = k.peran === 'ketua_jabatan';
       const badgeRole = isKetua
-        ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300">⚖️ Ketua Jabatan</span>`
-        : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">👤 Pegawai</span>`;
+        ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300">⚖️ Pejabat</span>`
+        : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">👤 Pegawai Nonpejabat</span>`;
 
       const jenisTags = (k.jenis || []).map(j => `
         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-white border border-slate-200 text-slate-800 shadow-2xs">
@@ -2388,10 +2388,10 @@ const App = {
     const isEdit = !!document.getElementById('editUserId')?.value;
 
     if (role === 'ketua_jabatan') {
-      if (!isEdit && title) title.textContent = 'Tambah Akun Ketua Jabatan';
+      if (!isEdit && title) title.textContent = 'Tambah Akun Pejabat Baru';
       if (!isEdit && subtitle) subtitle.textContent = 'Pilih kategori (Panitera, Kassubag, Panmub, dll) dan jenis jabatannya';
     } else {
-      if (!isEdit && title) title.textContent = 'Tambah Akun Pegawai Baru';
+      if (!isEdit && title) title.textContent = 'Tambah Akun Pegawai Nonpejabat';
       if (!isEdit && subtitle) subtitle.textContent = 'Lengkapi data pegawai dan jenis jabatannya';
     }
 
@@ -2412,7 +2412,7 @@ const App = {
     document.getElementById('formAddUser').reset();
     document.getElementById('editUserId').value = '';
     document.getElementById('modalAddUserTitle').textContent = 'Tambah Akun Baru';
-    document.getElementById('modalAddUserSubtitle').textContent = 'Pilih peran (Ketua Jabatan atau Pegawai) dan tentukan kategori jabatannya';
+    document.getElementById('modalAddUserSubtitle').textContent = 'Pilih peran (Pejabat atau Pegawai Nonpejabat) dan tentukan kategori jabatannya';
 
     const roleRadios = document.querySelectorAll('input[name="newUserRole"]');
     roleRadios.forEach(r => {

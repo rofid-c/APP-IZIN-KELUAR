@@ -508,11 +508,11 @@
               </button>
               <button onclick="App.filterAdminUsers('ketua_jabatan')" data-user-filter="ketua_jabatan"
                 class="admin-user-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200">
-                Ketua Jabatan (<span id="userCountKetua">0</span>)
+                Pejabat (<span id="userCountKetua">0</span>)
               </button>
               <button onclick="App.filterAdminUsers('pegawai')" data-user-filter="pegawai"
                 class="admin-user-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200">
-                Pegawai (<span id="userCountPegawai">0</span>)
+                Pegawai Nonpejabat (<span id="userCountPegawai">0</span>)
               </button>
               <button onclick="App.filterAdminUsers('pending')" data-user-filter="pending"
                 class="admin-user-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-100 text-amber-800 hover:bg-amber-200">
@@ -715,8 +715,8 @@
           </div>
           <div class="sm:col-span-4 md:col-span-3">
             <select id="newKategoriPeran" class="w-full px-3.5 py-2 text-xs bg-white border border-amber-300 rounded-xl font-semibold">
-              <option value="ketua_jabatan" selected>⚖️ Ketua Jabatan</option>
-              <option value="pegawai">👤 Pegawai Biasa</option>
+              <option value="ketua_jabatan" selected>⚖️ Pejabat</option>
+              <option value="pegawai">👤 Pegawai Nonpejabat</option>
             </select>
           </div>
           <div class="sm:col-span-2 md:col-span-2">
@@ -771,15 +771,15 @@
             <label class="border border-slate-200 rounded-xl p-2.5 flex items-center gap-2 cursor-pointer hover:bg-slate-50 transition has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50/50">
               <input type="radio" name="newUserRole" value="ketua_jabatan" onchange="App.onRoleChange(this.value)" class="accent-amber-700">
               <div>
-                <p class="font-bold text-slate-900 text-xs">⚖️ Ketua Jabatan</p>
-                <p class="text-[10px] text-slate-500">Penyetuju & TTD Surat</p>
+                <p class="font-bold text-slate-900 text-xs">⚖️ Pejabat</p>
+                <p class="text-[10px] text-slate-500">Pemangku jabatan atau pejabat organisasi</p>
               </div>
             </label>
             <label class="border border-slate-200 rounded-xl p-2.5 flex items-center gap-2 cursor-pointer hover:bg-slate-50 transition has-[:checked]:border-emerald-600 has-[:checked]:bg-emerald-50/50">
               <input type="radio" name="newUserRole" value="pegawai" checked onchange="App.onRoleChange(this.value)" class="accent-emerald-700">
               <div>
-                <p class="font-bold text-slate-900 text-xs">👤 Pegawai</p>
-                <p class="text-[10px] text-slate-500">Pemohon Izin Keluar</p>
+                <p class="font-bold text-slate-900 text-xs">👤 Pegawai Nonpejabat</p>
+                <p class="text-[10px] text-slate-500">Pegawai yang tidak menduduki jabatan</p>
               </div>
             </label>
           </div>
