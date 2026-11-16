@@ -2148,12 +2148,16 @@ const App = {
         </span>
       `).join('');
 
+      const countJenis = (k.jenis || []).length;
+      const countLabel = countJenis > 0 ? `<span class="text-[10px] text-slate-500 font-medium">(${countJenis} jenis)</span>` : '';
+
       return `
         <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 space-y-2.5">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
               <span class="font-bold text-slate-900 text-xs">${k.nama}</span>
               ${badgeRole}
+              ${countLabel}
             </div>
             ${!k.isLocked ? `
               <button type="button" onclick="App.deleteKategori('${k.id}', '${k.nama.replace(/'/g, "\\'")}')"
@@ -2163,9 +2167,9 @@ const App = {
             ` : `<span class="text-[10px] text-slate-400 italic">Kategori Pokok Sistem</span>`}
           </div>
 
-          <!-- List Jenis Jabatan -->
-          <div class="flex flex-wrap gap-1.5">
-            ${jenisTags || '<span class="text-[11px] text-slate-400 italic">Belum ada jenis jabatan terdaftar</span>'}
+          <!-- List Jenis Jabatan (Bisa di-scroll ke bawah/atas jika banyak) -->
+          <div class="flex flex-wrap gap-1.5 max-h-24 sm:max-h-28 overflow-y-auto pr-1.5 custom-scrollbar p-1.5 rounded-lg bg-slate-100/70 border border-slate-200/60 overscroll-contain">
+            ${jenisTags || '<span class="text-[11px] text-slate-400 italic p-1">Belum ada jenis jabatan terdaftar</span>'}
           </div>
 
           <!-- Input Cepat Tambah Jenis Jabatan -->
