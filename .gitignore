@@ -7,4 +7,6 @@ Thumbs.db
 .env
 *.db-wal
 *.db-shm
+data_backup/
+_temp_data_safe/
 
