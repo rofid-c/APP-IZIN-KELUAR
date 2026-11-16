@@ -2131,7 +2131,7 @@ const App = {
     if (!container) return;
 
     if (!this._allKategoriJabatan || this._allKategoriJabatan.length === 0) {
-      container.innerHTML = `<div class="p-6 text-center text-slate-400 bg-slate-50 rounded-xl">Belum ada kategori jabatan.</div>`;
+      container.innerHTML = `<div class="p-6 text-center text-slate-400 bg-slate-50 rounded-xl md:col-span-2">Belum ada kategori jabatan.</div>`;
       return;
     }
 
