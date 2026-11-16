@@ -393,10 +393,10 @@
   <div id="viewDashboardAdmin" class="hidden fixed inset-0 bg-slate-900 text-slate-100 flex flex-col font-sans overflow-hidden" style="z-index:40;">
     
     <!-- Top Command Navigation Header -->
-    <header class="bg-slate-950/95 backdrop-blur-md border-b border-slate-800 text-white px-4 lg:px-8 py-3 flex items-center justify-between shrink-0 z-30">
+    <header class="relative bg-slate-950/95 backdrop-blur-md border-b border-slate-800 text-white px-4 lg:px-8 py-3 flex items-center justify-between shrink-0 z-30">
       
       <!-- Logo & App Name -->
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-3 z-10">
         <div class="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 p-1 flex items-center justify-center shrink-0">
           <img src="/logo-pa.svg" alt="Logo PA" class="w-full h-full object-contain">
         </div>
@@ -409,8 +409,8 @@
         </div>
       </div>
 
-      <!-- Segmented Navigation Tabs -->
-      <nav class="flex items-center bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs font-semibold">
+      <!-- Segmented Navigation Tabs (Presisi Tepat di Tengah Layar) -->
+      <nav class="flex items-center md:absolute md:left-1/2 md:-translate-x-1/2 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs font-semibold z-10 shadow-inner">
         <button onclick="App.switchAdminTab('users')" data-admin-tab="users"
           class="admin-nav-btn flex items-center gap-2 px-3.5 py-1.5 rounded-lg transition text-white bg-emerald-600 shadow-sm">
           <i data-lucide="users" class="w-3.5 h-3.5"></i>
@@ -433,7 +433,7 @@
       </nav>
 
       <!-- Quick Actions -->
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 z-10">
         <button onclick="App.logout()" title="Keluar"
           class="p-2 rounded-xl text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition">
           <i data-lucide="log-out" class="w-4 h-4"></i>
