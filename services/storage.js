@@ -383,23 +383,12 @@ const storage = {
     return list.find(i => i.id === id) || null;
   },
 
-  // Pegawai / Pimpinan mengajukan izin baru (TANPA ESTIMASI KEMBALI)
+  // Pegawai & Pejabat mengajukan izin keluar kantor (Semua butuh ACC pejabat penyetuju)
   createIzin(payload) {
     const list = readJSON(IZIN_FILE, getDefaultIzin());
-    const isKetua = (payload.pegawaiId && payload.pegawaiId.startsWith('KJ')) || payload.role === 'ketua_jabatan';
-
-    let atasan = null;
-    if (isKetua) {
-      // Izin Pimpinan (Ketua / Wakil): Tidak ke siapa-siapa, langsung ACC sistem
-      atasan = {
-        id: 'SYSTEM',
-        nama: 'ACC Sistem',
-        nip: '-',
-        jabatan: 'Sistem E-IZIN'
-      };
-    } else {
-      atasan = this.getKetuaJabatanById(payload.atasanId) || DEFAULT_KETUA_JABATAN[0];
-    }
+    
+    // Pejabat penyetuju yang dipilih oleh pemohon
+    const atasan = this.getKetuaJabatanById(payload.atasanId) || this.getAllKetuaJabatan()[0] || DEFAULT_KETUA_JABATAN[0];
 
     const today = payload.tanggalIzin || new Date().toISOString().split('T')[0];
     const countToday = list.filter(i => i.tanggalIzin === today).length + 1;
@@ -414,26 +403,26 @@ const storage = {
     const newIzin = {
       id,
       kodeSurat,
-      pegawaiId: payload.pegawaiId || "PEG-001",
-      pegawaiNama: payload.nama || "Ahmad Fauzi",
-      pegawaiNip: payload.nip || payload.pegawaiNip || "199208152019031002",
-      pegawaiJabatan: payload.jabatan || "Pranata Komputer",
+      pegawaiId: payload.pegawaiId || (payload.role === 'ketua_jabatan' ? 'KJ-001' : 'PEG-001'),
+      pegawaiNama: payload.nama || 'Pemohon',
+      pegawaiNip: payload.nip || payload.pegawaiNip || '-',
+      pegawaiJabatan: payload.jabatan || 'Pegawai',
       atasanId: atasan.id,
       atasanNama: atasan.nama,
-      atasanNip: atasan.nip || "-",
-      atasanJabatan: atasan.jabatan || "-",
+      atasanNip: atasan.nip || '-',
+      atasanJabatan: atasan.jabatan || '-',
       keterangan: payload.keterangan,
       tanggalIzin: today,
       jamKeluar: jamKeluar,
       jamMasuk: payload.jamMasuk || null,
       ttdDigital: payload.ttdDigital || null,
-      ttdAtasan: isKetua ? (payload.ttdDigital || null) : null,
-      status: isKetua ? 'approved' : 'pending',
-      catatanAtasan: isKetua ? 'Disetujui Langsung oleh Sistem' : null,
+      ttdAtasan: null,
+      status: 'pending',
+      catatanAtasan: null,
       jamKembaliAktual: null,
       createdAt: new Date().toISOString(),
-      approvedAt: isKetua ? new Date().toISOString() : null,
-      isPimpinan: isKetua
+      approvedAt: null,
+      isPimpinan: false
     };
 
     list.unshift(newIzin);

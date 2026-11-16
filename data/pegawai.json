@@ -30,5 +30,18 @@
     "role": "pegawai",
     "statusAkun": "active",
     "createdAt": "2026-11-12T03:42:20.485Z"
+  },
+  {
+    "id": "KJ-6015",
+    "nama": "sek",
+    "username": "sek",
+    "nip": "4321",
+    "password": "4321",
+    "jabatan": "Sekretaris Pengadilan Agama Gunung Sugih",
+    "kategoriId": "kat-sekretaris",
+    "kategoriNama": "Sekretaris",
+    "role": "ketua_jabatan",
+    "statusAkun": "active",
+    "createdAt": "2026-11-16T07:38:36.015Z"
   }
 ]
