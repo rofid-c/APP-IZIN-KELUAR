@@ -24,6 +24,9 @@ const App = {
     atasanList: [],
     pegawaiIzinList: [],
     ketuaIzinList: [],
+    ketuaMyIzinList: [],
+    ketuaTab: 'acc',
+    ketuaMyFilter: 'all',
     pegawaiFilter: 'all',
     ketuaFilter: 'pending',
     selectedIzin: null,
@@ -86,15 +89,17 @@ const App = {
       document.getElementById('viewDashboardAdmin').classList.remove('hidden');
       await this.loadAdminDashboard();
     } else if (u.role === 'ketua_jabatan') {
-      // Tampilan Ketua Jabatan (Khusus Modul Approval)
+      // Tampilan Ketua Jabatan / Pimpinan (Modul Approval & Izin Mandiri)
       document.getElementById('viewDashboardPegawai').classList.add('hidden');
       document.getElementById('viewDashboardKetua').classList.remove('hidden');
       document.getElementById('ketuaNamaCard').textContent = u.nama;
       document.getElementById('ketuaJabatanCard').textContent = u.jabatan || 'Ketua Pengadilan Agama Gunung Sugih';
       const headerNama = document.getElementById('ketuaHeaderNama');
       if (headerNama) headerNama.textContent = u.nama;
+      this.switchKetuaTab(this.state.ketuaTab || 'acc');
       await this.loadAtasanList();
       await this.loadKetuaIzinList();
+      await this.loadKetuaMyIzinList();
     } else {
       // Tampilan Pegawai Biasa
       document.getElementById('viewDashboardKetua').classList.add('hidden');
@@ -480,6 +485,16 @@ const App = {
           antreanCountEl.textContent = `${pendingCount} butuh verifikasi`;
         }
 
+        const tabBadge = document.getElementById('ketuaTabAccBadge');
+        if (tabBadge) {
+          if (pendingCount > 0) {
+            tabBadge.textContent = pendingCount;
+            tabBadge.classList.remove('hidden');
+          } else {
+            tabBadge.classList.add('hidden');
+          }
+        }
+
         this.renderKetuaIzinList();
         lucide.createIcons();
       }
@@ -693,6 +708,195 @@ const App = {
     }
   },
 
+  // =========================================================================
+  // DUAL MODE PIMPINAN (KETUA & WAKIL): PERSETUJUAN (ACC) & IZIN SAYA (IZIN)
+  // =========================================================================
+
+  // Beralih Tab di Panel Pimpinan: Persetujuan (ACC) vs Izin Keluar Saya (IZIN)
+  switchKetuaTab(tab = 'acc') {
+    this.state.ketuaTab = tab;
+    const btnAcc = document.getElementById('btnKetuaTabAcc');
+    const btnIzin = document.getElementById('btnKetuaTabIzin');
+    const secAcc = document.getElementById('ketuaSectionApproval');
+    const secIzin = document.getElementById('ketuaSectionIzin');
+
+    if (tab === 'acc') {
+      if (btnAcc) {
+        btnAcc.className = 'flex-1 py-2 px-3 rounded-xl transition text-center flex items-center justify-center gap-1.5 bg-amber-700 text-white shadow-xs font-bold';
+      }
+      if (btnIzin) {
+        btnIzin.className = 'flex-1 py-2 px-3 rounded-xl transition text-center flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900 font-semibold';
+      }
+      if (secAcc) secAcc.classList.remove('hidden');
+      if (secIzin) secIzin.classList.add('hidden');
+    } else {
+      if (btnIzin) {
+        btnIzin.className = 'flex-1 py-2 px-3 rounded-xl transition text-center flex items-center justify-center gap-1.5 bg-amber-700 text-white shadow-xs font-bold';
+      }
+      if (btnAcc) {
+        btnAcc.className = 'flex-1 py-2 px-3 rounded-xl transition text-center flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900 font-semibold';
+      }
+      if (secAcc) secAcc.classList.add('hidden');
+      if (secIzin) secIzin.classList.remove('hidden');
+      this.loadKetuaMyIzinList();
+    }
+    lucide.createIcons();
+  },
+
+  // Load Izin Keluar Milik Pimpinan Sendiri (Ketua / Wakil)
+  async loadKetuaMyIzinList() {
+    if (!this.state.currentUser) return;
+    try {
+      const { id } = this.state.currentUser;
+      const res = await fetch(`/api/izin?pegawaiId=${id}&status=${this.state.ketuaMyFilter}`);
+      const json = await res.json();
+      if (json.success) {
+        this.state.ketuaMyIzinList = json.data;
+        const countEl = document.getElementById('ketuaMyIzinCount');
+        if (countEl) countEl.textContent = `${json.data.length} izin`;
+
+        this.renderKetuaPresenceStatus();
+        this.renderKetuaActiveCard();
+        this.renderKetuaMyIzinList();
+        lucide.createIcons();
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  },
+
+  // Render Status Kehadiran Pimpinan di Kantor
+  renderKetuaPresenceStatus() {
+    const badge = document.getElementById('ketuaPresenceBadge');
+    if (!badge) return;
+    const active = this.state.ketuaMyIzinList.find(i => i.status === 'approved' && !i.jamKembaliAktual);
+
+    if (active) {
+      badge.className = 'px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 inline-flex items-center gap-1 shrink-0';
+      badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-600 animate-ping"></span> Di Luar Kantor`;
+    } else {
+      badge.className = 'px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 inline-flex items-center gap-1 shrink-0';
+      badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> Di Kantor`;
+    }
+  },
+
+  // Kartu Izin Aktif Pimpinan (Jika sedang berada di luar kantor)
+  renderKetuaActiveCard() {
+    const container = document.getElementById('ketuaActiveCard');
+    if (!container) return;
+    const active = this.state.ketuaMyIzinList.find(i => i.status === 'approved' && !i.jamKembaliAktual);
+
+    if (!active) {
+      container.classList.add('hidden');
+      return;
+    }
+
+    container.classList.remove('hidden');
+    container.innerHTML = `
+      <div class="bg-gradient-to-r from-amber-900 to-amber-800 text-white rounded-2xl p-4 shadow-md space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] font-extrabold uppercase bg-amber-400 text-amber-950 px-2 py-0.5 rounded">
+            IZIN AKTIF PIMPINAN
+          </span>
+          <span class="text-xs text-amber-200 mono-font font-bold">
+            ${active.jamKeluar} s.d. ${active.jamMasuk || '-'} WIB
+          </span>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-bold text-white leading-snug">${active.keterangan}</h4>
+          <p class="text-[10px] text-amber-200/90 mt-1">Tanggal: <strong>${active.tanggalIzin}</strong> • Status: <strong>ACC Sistem (Resmi)</strong></p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 pt-1">
+          <button onclick="App.openTiketModal('${active.id}')"
+            class="py-2 px-3 rounded-xl text-xs font-bold bg-white/20 hover:bg-white/30 text-white transition flex items-center justify-center gap-1">
+            <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Lihat Surat
+          </button>
+          <button onclick="App.openKembaliModal('${active.id}')"
+            class="py-2 px-3 rounded-xl text-xs font-bold bg-amber-400 hover:bg-amber-300 text-amber-950 transition flex items-center justify-center gap-1">
+            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Tiba di Kantor
+          </button>
+        </div>
+      </div>
+    `;
+  },
+
+  // Riwayat Izin Keluar Pimpinan
+  renderKetuaMyIzinList() {
+    const container = document.getElementById('ketuaMyIzinList');
+    const empty = document.getElementById('ketuaMyEmptyState');
+    if (!container || !empty) return;
+    const items = this.state.ketuaMyIzinList;
+
+    if (items.length === 0) {
+      container.innerHTML = '';
+      empty.classList.remove('hidden');
+      return;
+    }
+
+    empty.classList.add('hidden');
+    container.innerHTML = items.map(item => {
+      let statusBadge = '';
+      if (item.status === 'approved') {
+        statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300">✓ ACC Sistem</span>`;
+      } else if (item.status === 'completed') {
+        statusBadge = `<span class="badge-completed px-2 py-0.5 rounded-full text-[10px] font-bold">Selesai</span>`;
+      } else {
+        statusBadge = `<span class="badge-approved px-2 py-0.5 rounded-full text-[10px] font-bold">${item.status}</span>`;
+      }
+
+      return `
+        <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-2xs space-y-3">
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-slate-500 font-medium">${formatDateIndo(item.tanggalIzin)}</span>
+            ${statusBadge}
+          </div>
+
+          <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/80 space-y-1">
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-bold text-slate-800">${item.jamKeluar} s.d. ${item.jamMasuk || '-'} WIB</span>
+              <span class="text-[9px] font-mono text-slate-400 font-semibold">${item.kodeSurat || item.id}</span>
+            </div>
+            <p class="text-xs text-slate-600 line-clamp-2">"${item.keterangan}"</p>
+          </div>
+
+          <div class="flex items-center justify-between pt-1">
+            <button onclick="App.openTiketModal('${item.id}')"
+              class="px-3 py-1.5 rounded-xl text-xs font-bold text-court-800 bg-court-50 hover:bg-court-100 border border-court-200 transition flex items-center gap-1">
+              <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Cetak Surat
+            </button>
+
+            ${item.status === 'approved' && !item.jamKembaliAktual ? `
+              <button onclick="App.openKembaliModal('${item.id}')"
+                class="px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-amber-700 hover:bg-amber-800 transition flex items-center gap-1">
+                <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Check-in Kembali
+              </button>
+            ` : (item.jamKembaliAktual ? `
+              <span class="text-[10px] text-slate-500 font-medium">
+                Tiba: <strong>${item.jamKembaliAktual} WIB</strong>
+              </span>
+            ` : '')}
+          </div>
+        </div>
+      `;
+    }).join('');
+  },
+
+  // Filter Riwayat Izin Pimpinan
+  filterKetuaMyIzin(filter) {
+    this.state.ketuaMyFilter = filter;
+    document.querySelectorAll('.ketua-my-filter-btn').forEach(btn => {
+      const f = btn.getAttribute('data-ketua-my-filter');
+      if (f === filter) {
+        btn.className = 'ketua-my-filter-btn px-3 py-1 rounded-full text-[11px] font-bold bg-amber-800 text-white';
+      } else {
+        btn.className = 'ketua-my-filter-btn px-3 py-1 rounded-full text-[11px] font-semibold bg-white text-slate-600 border border-slate-200';
+      }
+    });
+    this.loadKetuaMyIzinList();
+  },
+
   // ==========================================
   // SIGNATURE PAD & MODAL FORM PENGAJUAN
   // ==========================================
@@ -825,10 +1029,38 @@ const App = {
 
   openPengajuanModal() {
     const u = this.state.currentUser;
+    const isKetua = u && (u.role === 'ketua_jabatan' || (u.id && u.id.startsWith('KJ')));
+
+    const form = document.getElementById('formPengajuanIzin');
+    if (form) form.reset();
+
+    const wrapperAtasan = document.getElementById('wrapperAtasanSelect');
+    const atasanSelect = document.getElementById('atasanId');
+    const bannerPimpinan = document.getElementById('bannerPimpinanIzin');
+    const titleEl = document.getElementById('modalPengajuanTitle');
+    const subtitleEl = document.getElementById('modalPengajuanSubtitle');
+    const btnSubmit = document.getElementById('btnSubmitPengajuan');
+
+    if (isKetua) {
+      if (wrapperAtasan) wrapperAtasan.classList.add('hidden');
+      if (atasanSelect) atasanSelect.removeAttribute('required');
+      if (bannerPimpinan) bannerPimpinan.classList.remove('hidden');
+      if (titleEl) titleEl.textContent = 'Pengajuan Izin Keluar (Pimpinan)';
+      if (subtitleEl) subtitleEl.textContent = 'Izin resmi mandiri — langsung di-ACC otomatis oleh sistem';
+      if (btnSubmit) btnSubmit.innerHTML = `<i data-lucide="send" class="w-3.5 h-3.5"></i> Terbitkan Surat (ACC Sistem)`;
+    } else {
+      if (wrapperAtasan) wrapperAtasan.classList.remove('hidden');
+      if (atasanSelect) atasanSelect.setAttribute('required', 'true');
+      if (bannerPimpinan) bannerPimpinan.classList.add('hidden');
+      if (titleEl) titleEl.textContent = 'Form Izin Keluar Kantor';
+      if (subtitleEl) subtitleEl.textContent = 'Isi data dan bubuhkan tanda tangan';
+      if (btnSubmit) btnSubmit.innerHTML = `<i data-lucide="send" class="w-3.5 h-3.5"></i> Kirim Permohonan`;
+    }
+
     document.getElementById('formNama').value = u ? u.nama : '';
     const nipEl = document.getElementById('formNip');
     if (nipEl) nipEl.value = u ? (u.nip || '') : '';
-    document.getElementById('formJabatan').value = u ? (u.jabatan || 'Pegawai') : '';
+    document.getElementById('formJabatan').value = u ? (u.jabatan || (isKetua ? 'Ketua Pengadilan Agama Gunung Sugih' : 'Pegawai')) : '';
     document.getElementById('formKeterangan').value = '';
 
     const now = new Date();
@@ -859,7 +1091,7 @@ const App = {
     this.clearSignature();
   },
 
-  // Kirim Permohonan Izin Baru (Pilih Ketua Jabatan, Nama, NIP, Jabatan, Tanggal, Jam Keluar, Jam Masuk, Keterangan, TTD Digital)
+  // Kirim Permohonan Izin Baru (Pegawai / Pimpinan)
   async handleFormSubmit(e) {
     e.preventDefault();
 
@@ -870,15 +1102,17 @@ const App = {
 
     const ttdDigital = this.canvas.toDataURL('image/png');
     const btn = document.getElementById('btnSubmitPengajuan');
+    const isKetua = this.state.currentUser && (this.state.currentUser.role === 'ketua_jabatan' || (this.state.currentUser.id && this.state.currentUser.id.startsWith('KJ')));
+
     btn.disabled = true;
-    btn.innerHTML = `Mengirim...`;
+    btn.innerHTML = `Memproses...`;
 
     try {
       const formData = new FormData(e.target);
       const payload = {
         pegawaiId: this.state.currentUser.id,
         role: this.state.currentUser.role,
-        atasanId: formData.get('atasanId'),
+        atasanId: isKetua ? 'SYSTEM' : formData.get('atasanId'),
         nama: formData.get('nama'),
         nip: formData.get('nip') || (this.state.currentUser ? this.state.currentUser.nip : ''),
         jabatan: formData.get('jabatan'),
@@ -898,8 +1132,13 @@ const App = {
 
       if (json.success) {
         this.closePengajuanModal();
-        this.showToast('Permohonan izin berhasil diajukan ke Ketua Jabatan.', 'success');
-        await this.loadPegawaiIzinList();
+        this.showToast(json.message || (isKetua ? 'Surat izin pimpinan berhasil diterbitkan (ACC Sistem).' : 'Permohonan izin berhasil diajukan ke Ketua Jabatan.'), 'success');
+        if (isKetua) {
+          this.switchKetuaTab('izin');
+          await this.loadKetuaMyIzinList();
+        } else {
+          await this.loadPegawaiIzinList();
+        }
       } else {
         this.showToast(json.message || 'Gagal mengajukan izin.', 'error');
       }
@@ -907,7 +1146,7 @@ const App = {
       this.showToast('Terjadi kesalahan jaringan.', 'error');
     } finally {
       btn.disabled = false;
-      btn.innerHTML = `<i data-lucide="send" class="w-3.5 h-3.5"></i> Kirim Permohonan`;
+      btn.innerHTML = `<i data-lucide="send" class="w-3.5 h-3.5"></i> ${isKetua ? 'Terbitkan Surat (ACC Sistem)' : 'Kirim Permohonan'}`;
       lucide.createIcons();
     }
   },
@@ -923,73 +1162,108 @@ const App = {
       this.state.selectedIzin = item;
       this.state.selectedIzinId = item.id;
 
-      // 1. Yang bertandatangan di bawah ini (Ketua Jabatan)
+      const isPimpinan = item.isPimpinan || item.atasanId === 'SYSTEM' || (item.pegawaiId && item.pegawaiId.startsWith('KJ'));
+
+      const labelAtasan = document.getElementById('labelSuratAtasan');
+      const labelPemohon = document.getElementById('labelSuratPemohon');
       const atasanInfoEl = document.getElementById('suratAtasanInfo');
-      if (atasanInfoEl) {
-        atasanInfoEl.textContent = `${item.atasanNama} (${item.atasanJabatan || 'Ketua Pengadilan Agama Gunung Sugih'})`;
-      }
-
-      // 2. Memberikan izin kepada (Pemohon)
       const pemohonInfoEl = document.getElementById('suratPemohonInfo');
-      if (pemohonInfoEl) {
-        pemohonInfoEl.textContent = `${item.pegawaiNama} (NIP. ${item.pegawaiNip || '-'}, Jabatan: ${item.pegawaiJabatan})`;
+      const waktuInfoEl = document.getElementById('suratWaktuInfo');
+      const keperluanInfoEl = document.getElementById('suratKeperluanInfo');
+      const kalimatPenutupEl = document.getElementById('suratKalimatPenutup');
+
+      const boxKiriStandard = document.getElementById('suratBoxKiriStandard');
+      const stampPimpinan = document.getElementById('suratStampPimpinan');
+      const stampKode = document.getElementById('suratStampPimpinanKode');
+
+      const ttdPemohonImg = document.getElementById('suratTtdPemohon');
+      const namaBawahPemohonEl = document.getElementById('suratNamaBawahPemohon');
+      const nipPemohonEl = document.getElementById('suratNipPemohon');
+
+      const tanggalTempatEl = document.getElementById('suratTanggalTempat');
+      const jabatanBawahAtasanEl = document.getElementById('suratJabatanBawahAtasan');
+      const ttdAtasanImg = document.getElementById('suratTtdAtasan');
+      const namaBawahAtasanEl = document.getElementById('suratNamaBawahAtasan');
+      const nipAtasanEl = document.getElementById('suratNipAtasan');
+
+      if (isPimpinan) {
+        // ========================================================
+        // FORMAT SURAT IZIN PIMPINAN (KETUA / WAKIL)
+        // Mandiri: Tidak ke siapa-siapa, langsung disahkan sistem
+        // ========================================================
+        if (labelAtasan) labelAtasan.textContent = 'Yang bertandatangan di bawah ini';
+        if (atasanInfoEl) atasanInfoEl.textContent = item.pegawaiNama;
+        if (labelPemohon) labelPemohon.textContent = 'Jabatan / NIP';
+        if (pemohonInfoEl) pemohonInfoEl.textContent = `${item.pegawaiJabatan} / NIP. ${item.pegawaiNip || '-'}`;
+        if (kalimatPenutupEl) {
+          kalimatPenutupEl.textContent = 'Demikian izin keluar kantor ini dibuat dan disetujui secara resmi melalui sistem untuk digunakan sebagaimana mestinya.';
+        }
+
+        // Kolom Kiri: Tampilkan Stamp Validasi Sistem Otomatis
+        if (boxKiriStandard) boxKiriStandard.classList.add('hidden');
+        if (stampPimpinan) stampPimpinan.classList.remove('hidden');
+        if (stampKode) stampKode.textContent = `No: ${item.kodeSurat || item.id}`;
+
+        // Kolom Kanan: Tanda Tangan Resmi Pejabat Pimpinan Bersangkutan
+        if (tanggalTempatEl) tanggalTempatEl.textContent = `Gunung Sugih, ${formatDateIndo(item.tanggalIzin)}`;
+        if (jabatanBawahAtasanEl) jabatanBawahAtasanEl.textContent = `${item.pegawaiJabatan || 'Ketua Pengadilan Agama Gunung Sugih'},`;
+        if (ttdAtasanImg) {
+          ttdAtasanImg.src = item.ttdDigital || '';
+          ttdAtasanImg.style.display = item.ttdDigital ? 'block' : 'none';
+        }
+        if (namaBawahAtasanEl) namaBawahAtasanEl.textContent = `( ${item.pegawaiNama} )`;
+        if (nipAtasanEl) nipAtasanEl.textContent = `NIP. ${item.pegawaiNip || '....................'}`;
+
+      } else {
+        // ========================================================
+        // FORMAT SURAT IZIN PEGAWAI BIASA
+        // Diberikan oleh Pejabat Penyetuju (Ketua Jabatan) ke Pegawai
+        // ========================================================
+        if (labelAtasan) labelAtasan.textContent = 'Yang bertandatangan di bawah ini';
+        if (atasanInfoEl) atasanInfoEl.textContent = `${item.atasanNama} (${item.atasanJabatan || 'Ketua Pengadilan Agama Gunung Sugih'})`;
+        if (labelPemohon) labelPemohon.textContent = 'Dengan ini memberikan izin kepada';
+        if (pemohonInfoEl) pemohonInfoEl.textContent = `${item.pegawaiNama} (NIP. ${item.pegawaiNip || '-'}, Jabatan: ${item.pegawaiJabatan})`;
+        if (kalimatPenutupEl) {
+          kalimatPenutupEl.textContent = 'Demikian izin ini diberikan kepada yang bersangkutan untuk digunakan sebagaimana mestinya.';
+        }
+
+        // Kolom Kiri: Pemohon Pegawai
+        if (boxKiriStandard) boxKiriStandard.classList.remove('hidden');
+        if (stampPimpinan) stampPimpinan.classList.add('hidden');
+        if (ttdPemohonImg) {
+          if (item.ttdDigital) {
+            ttdPemohonImg.src = item.ttdDigital;
+            ttdPemohonImg.style.display = 'block';
+          } else {
+            ttdPemohonImg.style.display = 'none';
+          }
+        }
+        if (namaBawahPemohonEl) namaBawahPemohonEl.textContent = `( ${item.pegawaiNama} )`;
+        if (nipPemohonEl) nipPemohonEl.textContent = `NIP. ${item.pegawaiNip || '....................'}`;
+
+        // Kolom Kanan: Ketua Jabatan Penyetuju
+        if (tanggalTempatEl) tanggalTempatEl.textContent = `Gunung Sugih, ${formatDateIndo(item.tanggalIzin)}`;
+        if (jabatanBawahAtasanEl) jabatanBawahAtasanEl.textContent = `${item.atasanJabatan || 'Ketua Pengadilan Agama Gunung Sugih'},`;
+        if (ttdAtasanImg) {
+          const signatureSource = item.ttdAtasan || (item.status === 'approved' ? item.ttdDigital : null);
+          if (signatureSource) {
+            ttdAtasanImg.src = signatureSource;
+            ttdAtasanImg.style.display = 'block';
+          } else {
+            ttdAtasanImg.style.display = 'none';
+          }
+        }
+        if (namaBawahAtasanEl) namaBawahAtasanEl.textContent = `( ${item.atasanNama} )`;
+        if (nipAtasanEl) nipAtasanEl.textContent = `NIP. ${item.atasanNip || '197405102001121001'}`;
       }
 
-      // 3. Waktu keluar kantor
-      const waktuInfoEl = document.getElementById('suratWaktuInfo');
+      // Waktu dan Keperluan
       if (waktuInfoEl) {
         waktuInfoEl.textContent = `${formatDateIndo(item.tanggalIzin, true)}, Pukul ${item.jamKeluar} s.d. ${item.jamMasuk || '-'} WIB`;
       }
-
-      // 4. Keterangan keperluan
-      const keperluanInfoEl = document.getElementById('suratKeperluanInfo');
       if (keperluanInfoEl) {
         keperluanInfoEl.textContent = item.keterangan;
       }
-
-      // 5. TTD Pemohon (Kiri)
-      const ttdPemohonImg = document.getElementById('suratTtdPemohon');
-      if (ttdPemohonImg) {
-        if (item.ttdDigital) {
-          ttdPemohonImg.src = item.ttdDigital;
-          ttdPemohonImg.style.display = 'block';
-        } else {
-          ttdPemohonImg.style.display = 'none';
-        }
-      }
-      const namaBawahPemohonEl = document.getElementById('suratNamaBawahPemohon');
-      if (namaBawahPemohonEl) namaBawahPemohonEl.textContent = `( ${item.pegawaiNama} )`;
-
-      const nipPemohonEl = document.getElementById('suratNipPemohon');
-      if (nipPemohonEl) nipPemohonEl.textContent = `NIP. ${item.pegawaiNip || '....................'}`;
-
-      // 6. TTD Ketua Jabatan (Kanan)
-      const tanggalTempatEl = document.getElementById('suratTanggalTempat');
-      if (tanggalTempatEl) {
-        tanggalTempatEl.textContent = `Gunung Sugih, ${formatDateIndo(item.tanggalIzin)}`;
-      }
-
-      const jabatanBawahAtasanEl = document.getElementById('suratJabatanBawahAtasan');
-      if (jabatanBawahAtasanEl) {
-        jabatanBawahAtasanEl.textContent = `${item.atasanJabatan || 'Ketua Pengadilan Agama Gunung Sugih'},`;
-      }
-
-      const ttdAtasanImg = document.getElementById('suratTtdAtasan');
-      if (ttdAtasanImg) {
-        const signatureSource = item.ttdAtasan || (item.status === 'approved' ? item.ttdDigital : null);
-        if (signatureSource) {
-          ttdAtasanImg.src = signatureSource;
-          ttdAtasanImg.style.display = 'block';
-        } else {
-          ttdAtasanImg.style.display = 'none';
-        }
-      }
-
-      const namaBawahAtasanEl = document.getElementById('suratNamaBawahAtasan');
-      if (namaBawahAtasanEl) namaBawahAtasanEl.textContent = `( ${item.atasanNama} )`;
-
-      const nipAtasanEl = document.getElementById('suratNipAtasan');
-      if (nipAtasanEl) nipAtasanEl.textContent = `NIP. ${item.atasanNip || '197405102001121001'}`;
 
       document.getElementById('modalTiket').classList.remove('modal-hidden');
       lucide.createIcons();
@@ -1037,7 +1311,9 @@ const App = {
 
   // Check-In Kembali
   openKembaliModal(izinId) {
-    const item = this.state.pegawaiIzinList && this.state.pegawaiIzinList.find(i => i.id === izinId);
+    const isKetua = this.state.currentUser && this.state.currentUser.role === 'ketua_jabatan';
+    const list = isKetua ? this.state.ketuaMyIzinList : this.state.pegawaiIzinList;
+    const item = list && list.find(i => i.id === izinId);
     if (!item) return;
 
     this.state.selectedIzin = item;
@@ -1056,6 +1332,7 @@ const App = {
   async submitKembali() {
     if (!this.state.selectedIzin) return;
     const jamKembali = document.getElementById('kembaliJam').value;
+    const isKetua = this.state.currentUser && this.state.currentUser.role === 'ketua_jabatan';
 
     try {
       const res = await fetch(`/api/izin/${this.state.selectedIzin.id}/kembali`, {
@@ -1067,7 +1344,11 @@ const App = {
       if (json.success) {
         this.closeKembaliModal();
         this.showToast('Konfirmasi kembali berhasil disimpan.', 'success');
-        await this.loadPegawaiIzinList();
+        if (isKetua) {
+          await this.loadKetuaMyIzinList();
+        } else {
+          await this.loadPegawaiIzinList();
+        }
       }
     } catch (e) {
       this.showToast('Gagal menyimpan konfirmasi.', 'error');
@@ -1109,6 +1390,14 @@ const App = {
 
         this.state.ketuaFilter = e.currentTarget.dataset.ketuaFilter;
         this.loadKetuaIzinList();
+      });
+    });
+
+    // Filter Riwayat Izin Pimpinan Sendiri (Ketua & Wakil)
+    document.querySelectorAll('.ketua-my-filter-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const filter = e.currentTarget.getAttribute('data-ketua-my-filter');
+        this.filterKetuaMyIzin(filter);
       });
     });
 
@@ -1434,7 +1723,7 @@ const App = {
     const isEdit = !!document.getElementById('editUserId')?.value;
 
     if (role === 'ketua_jabatan') {
-      if (!isEdit && title) title.textContent = 'Tambah Ketua Jabatan Baru';
+      if (!isEdit && title) title.textContent = 'Tambah Pimpinan Baru (Ketua / Wakil)';
       if (!isEdit && jabatanInput && !jabatanInput.value) jabatanInput.value = 'Ketua Pengadilan Agama Gunung Sugih';
     } else {
       if (!isEdit && title) title.textContent = 'Tambah Akun Pegawai Baru';
@@ -1622,15 +1911,15 @@ const App = {
             </div>
           </div>
 
-          <!-- Penyetuju (Ketua Jabatan) -->
+          <!-- Penyetuju (Ketua Jabatan / Sistem) -->
           <div class="md:col-span-5 flex items-center gap-2.5 min-w-0">
-            <div class="w-8 h-8 rounded-xl bg-amber-100 text-amber-900 font-bold text-xs flex items-center justify-center shrink-0">
-              <i data-lucide="award" class="w-4 h-4"></i>
+            <div class="w-8 h-8 rounded-xl ${izin.isPimpinan || izin.atasanId === 'SYSTEM' ? 'bg-emerald-100 text-emerald-900' : 'bg-amber-100 text-amber-900'} font-bold text-xs flex items-center justify-center shrink-0">
+              <i data-lucide="${izin.isPimpinan || izin.atasanId === 'SYSTEM' ? 'shield-check' : 'award'}" class="w-4 h-4"></i>
             </div>
             <div class="min-w-0">
               <p class="text-[9px] font-bold uppercase tracking-wider text-slate-400">Kepada (Penyetuju)</p>
-              <p class="text-xs font-bold text-slate-900 truncate">${izin.atasanNama || '-'}</p>
-              <p class="text-[10px] text-slate-500 truncate">${izin.atasanJabatan || 'Ketua PA'}</p>
+              <p class="text-xs font-bold text-slate-900 truncate">${izin.isPimpinan || izin.atasanId === 'SYSTEM' ? '🤖 ACC Sistem (Otomatis)' : (izin.atasanNama || '-')}</p>
+              <p class="text-[10px] text-slate-500 truncate">${izin.isPimpinan || izin.atasanId === 'SYSTEM' ? 'Izin Mandiri Pimpinan' : (izin.atasanJabatan || 'Ketua PA')}</p>
             </div>
           </div>
 
@@ -1694,8 +1983,9 @@ const App = {
     document.getElementById('detailAlurKodeSurat').textContent = `${izin.kodeSurat || izin.id} (${formatDateIndo(izin.tanggalIzin, true)})`;
     document.getElementById('detailAlurPemohon').textContent = izin.pegawaiNama || '-';
     document.getElementById('detailAlurNipPemohon').textContent = `NIP: ${izin.pegawaiNip || '-'}`;
-    document.getElementById('detailAlurAtasan').textContent = izin.atasanNama || '-';
-    document.getElementById('detailAlurJabatanAtasan').textContent = izin.atasanJabatan || 'Ketua PA';
+    const isPimpinan = izin.isPimpinan || izin.atasanId === 'SYSTEM' || (izin.pegawaiId && izin.pegawaiId.startsWith('KJ'));
+    document.getElementById('detailAlurAtasan').textContent = isPimpinan ? '🤖 ACC Sistem (Otomatis)' : (izin.atasanNama || '-');
+    document.getElementById('detailAlurJabatanAtasan').textContent = isPimpinan ? 'Izin Mandiri Pimpinan' : (izin.atasanJabatan || 'Ketua PA');
     document.getElementById('detailAlurKeperluan').textContent = `"${izin.keterangan || '-'}"`;
 
     const stepsContainer = document.getElementById('detailAlurTimelineSteps');

@@ -294,10 +294,23 @@ const storage = {
     return list.find(i => i.id === id) || null;
   },
 
-  // Pegawai mengajukan izin baru (TANPA ESTIMASI KEMBALI)
+  // Pegawai / Pimpinan mengajukan izin baru (TANPA ESTIMASI KEMBALI)
   createIzin(payload) {
     const list = readJSON(IZIN_FILE, getDefaultIzin());
-    const atasan = this.getKetuaJabatanById(payload.atasanId) || DEFAULT_KETUA_JABATAN[0];
+    const isKetua = (payload.pegawaiId && payload.pegawaiId.startsWith('KJ')) || payload.role === 'ketua_jabatan';
+
+    let atasan = null;
+    if (isKetua) {
+      // Izin Pimpinan (Ketua / Wakil): Tidak ke siapa-siapa, langsung ACC sistem
+      atasan = {
+        id: 'SYSTEM',
+        nama: 'ACC Sistem',
+        nip: '-',
+        jabatan: 'Sistem E-IZIN'
+      };
+    } else {
+      atasan = this.getKetuaJabatanById(payload.atasanId) || DEFAULT_KETUA_JABATAN[0];
+    }
 
     const today = payload.tanggalIzin || new Date().toISOString().split('T')[0];
     const countToday = list.filter(i => i.tanggalIzin === today).length + 1;
@@ -309,8 +322,6 @@ const storage = {
     const minutes = String(now.getMinutes()).padStart(2, '0');
     const jamKeluar = payload.jamKeluar || `${hours}:${minutes}`;
 
-    const isKetua = (payload.pegawaiId && payload.pegawaiId.startsWith('KJ')) || payload.role === 'ketua_jabatan';
-
     const newIzin = {
       id,
       kodeSurat,
@@ -320,8 +331,8 @@ const storage = {
       pegawaiJabatan: payload.jabatan || "Pranata Komputer",
       atasanId: atasan.id,
       atasanNama: atasan.nama,
-      atasanNip: atasan.nip || "197405102001121001",
-      atasanJabatan: atasan.jabatan,
+      atasanNip: atasan.nip || "-",
+      atasanJabatan: atasan.jabatan || "-",
       keterangan: payload.keterangan,
       tanggalIzin: today,
       jamKeluar: jamKeluar,
@@ -329,10 +340,11 @@ const storage = {
       ttdDigital: payload.ttdDigital || null,
       ttdAtasan: isKetua ? (payload.ttdDigital || null) : null,
       status: isKetua ? 'approved' : 'pending',
-      catatanAtasan: isKetua ? 'Disetujui Langsung (Izin Resmi Pimpinan)' : null,
+      catatanAtasan: isKetua ? 'Disetujui Langsung oleh Sistem' : null,
       jamKembaliAktual: null,
       createdAt: new Date().toISOString(),
-      approvedAt: isKetua ? new Date().toISOString() : null
+      approvedAt: isKetua ? new Date().toISOString() : null,
+      isPimpinan: isKetua
     };
 
     list.unshift(newIzin);
@@ -597,9 +609,11 @@ const storage = {
         },
         {
           step: 2,
-          title: izin.status === 'rejected' ? "Permohonan Ditolak" : "Persetujuan Ketua Jabatan",
-          actor: izin.atasanNama,
-          role: izin.atasanJabatan || 'Ketua Pengadilan Agama',
+          title: izin.status === 'rejected'
+            ? "Permohonan Ditolak"
+            : (izin.isPimpinan || izin.atasanId === 'SYSTEM' ? "ACC Otomatis Sistem" : "Persetujuan Ketua Jabatan"),
+          actor: (izin.isPimpinan || izin.atasanId === 'SYSTEM') ? "Sistem E-IZIN" : izin.atasanNama,
+          role: (izin.isPimpinan || izin.atasanId === 'SYSTEM') ? "Disetujui Otomatis Sistem" : (izin.atasanJabatan || 'Ketua Pengadilan Agama'),
           time: izin.approvedAt || izin.rejectedAt || null,
           done: izin.status !== 'pending',
           status: izin.status === 'pending' ? 'current' : (izin.status === 'rejected' ? 'rejected' : 'done'),

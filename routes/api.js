@@ -75,12 +75,14 @@ router.get('/izin/:id', (req, res) => {
   res.json({ success: true, data: item });
 });
 
-// POST /api/izin - Pegawai Mengajukan Izin (TANPA ESTIMASI KEMBALI)
+// POST /api/izin - Pegawai / Pimpinan Mengajukan Izin (TANPA ESTIMASI KEMBALI)
 router.post('/izin', (req, res) => {
   try {
     const { pegawaiId, role, nama, nip, pegawaiNip, jabatan, atasanId, keterangan, tanggalIzin, jamKeluar, jamMasuk, ttdDigital } = req.body;
 
-    if (!atasanId) {
+    const isPimpinan = role === 'ketua_jabatan' || (pegawaiId && pegawaiId.startsWith('KJ'));
+
+    if (!isPimpinan && !atasanId) {
       return res.status(400).json({ success: false, message: 'Pilih Ketua Jabatan Perizinan.' });
     }
     if (!nama || !jabatan || !keterangan || !jamKeluar || !jamMasuk) {
@@ -96,7 +98,7 @@ router.post('/izin', (req, res) => {
       nama,
       nip: nip || pegawaiNip,
       jabatan,
-      atasanId,
+      atasanId: isPimpinan ? 'SYSTEM' : atasanId,
       keterangan,
       tanggalIzin,
       jamKeluar,
@@ -106,7 +108,9 @@ router.post('/izin', (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'Permohonan izin berhasil diajukan dan sedang menunggu persetujuan Ketua Jabatan.',
+      message: isPimpinan
+        ? 'Permohonan izin pimpinan berhasil diterbitkan dan langsung disetujui otomatis oleh sistem.'
+        : 'Permohonan izin berhasil diajukan dan sedang menunggu persetujuan Ketua Jabatan.',
       data: newIzin
     });
   } catch (error) {

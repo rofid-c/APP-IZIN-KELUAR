@@ -95,10 +95,11 @@ flowchart TD
    - **Nama**: `Ahmad Fauzi`
    - **NIP**: `199208152019031002`
    - **Hak Akses**: Mengajukan izin, melihat status, cetak/download surat PDF resmi, check-in kembali saat tiba di kantor, dan menghapus permohonan yang masih Menunggu. *(Pegawai biasa tidak dapat menyetujui/menolak izin)*.
-2. **Akun Ketua Jabatan (Khusus Approval & Penandatanganan Digital)**:
-   - **Nama**: `Dr. H. Ahmad Zarkasi, S.H.I., M.H.` (atau ketik `Ahmad Zarkasi`)
-   - **NIP**: `197405102001121001`
-   - **Hak Akses Khusus**: Panel khusus untuk meninjau antrean permohonan izin keluar kantor pegawai, menyetujui izin dengan membubuhkan **Tanda Tangan Digital Resmi**, atau menolak permohonan dengan catatan alasan.
+2. **Akun Pimpinan (Ketua & Wakil Ketua Pengadilan Agama)**:
+   - **Hak Akses Ganda (Dual Mode: ACC & IZIN)**:
+     - **Modul ACC**: Meninjau antrean permohonan izin bawahan/pegawai, menyetujui izin dengan membubuhkan **Tanda Tangan Digital Resmi**, atau menolak permohonan dengan catatan alasan.
+     - **Modul Izin Pimpinan**: Mengajukan izin keluar kantor untuk diri sendiri secara mandiri tanpa memilih atasan ("tidak ke siapa"), **langsung di-ACC otomatis oleh sistem**, dan surat izin resmi diterbitkan dengan tanda tangan tunggal pimpinan serta stempel pengesahan sistem.
+     - **Konfirmasi Kembali**: Dapat melakukan check-in tiba di kantor dan melihat riwayat izin mandiri.
 
 ---
 
@@ -107,8 +108,8 @@ flowchart TD
   - **Kop Surat**: Lambang Mahkamah Agung RI, Ditjen Badilag, PTA Bandar Lampung, PA Gunung Sugih, Jalan Negara No. 99 Gunung Sugih, Lampung Tengah, Lampung 34161, (0725) 528885.
   - **Garis Ganda Kop (Thick-Thin Double Line)**.
   - **Judul**: `IZIN KELUAR KANTOR`.
-  - **Tabel Isi**: Yang bertandatangan di bawah ini, Dengan ini memberikan izin kepada, Untuk keluar kantor pada, Untuk keperluan.
-  - **Dua Kolom Tanda Tangan**: Pemohon (kiri) & Ketua Pengadilan Agama Gunung Sugih (kanan) lengkap dengan tanda tangan digital dan NIP masing-masing.
+  - **Surat Izin Pegawai**: Format 2 pihak (Yang bertandatangan di bawah ini memberikan izin kepada...) dengan dua kolom tanda tangan: Pemohon (kiri) & Ketua Pengadilan Agama (kanan).
+  - **Surat Izin Pimpinan (Ketua / Wakil)**: Format mandiri (tidak ke atasan lain) dengan stempel pengesahan sistem digital di kolom kiri dan tanda tangan resmi tunggal pimpinan di kolom kanan.
   - **Download Surat Format PDF**: Tombol sekali klik untuk mengunduh dokumen siap cetak dalam ukuran A4.
 
 ---
