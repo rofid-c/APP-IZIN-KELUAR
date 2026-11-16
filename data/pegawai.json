@@ -1,10 +1,10 @@
 [
   {
     "id": "KJ-001",
-    "nama": "tes",
+    "nama": "tes3",
     "username": "Ahmad Zarkasi",
-    "nip": "123456789",
-    "password": "123456789",
+    "nip": "565645",
+    "password": "565645",
     "jabatan": "Ketua Pengadilan Agama Gunung Sugih",
     "role": "ketua_jabatan",
     "statusAkun": "active"
