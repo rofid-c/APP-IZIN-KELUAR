@@ -1222,7 +1222,7 @@ const App = {
         if (labelAtasan) labelAtasan.textContent = 'Yang bertandatangan di bawah ini';
         if (atasanInfoEl) atasanInfoEl.textContent = `${item.atasanNama} (${item.atasanJabatan || 'Ketua Pengadilan Agama Gunung Sugih'})`;
         if (labelPemohon) labelPemohon.textContent = 'Dengan ini memberikan izin kepada';
-        if (pemohonInfoEl) pemohonInfoEl.textContent = `${item.pegawaiNama} (NIP. ${item.pegawaiNip || '-'}, Jabatan: ${item.pegawaiJabatan})`;
+        if (pemohonInfoEl) pemohonInfoEl.textContent = item.pegawaiNama;
         if (kalimatPenutupEl) {
           kalimatPenutupEl.textContent = 'Demikian izin ini diberikan kepada yang bersangkutan untuk digunakan sebagaimana mestinya.';
         }
