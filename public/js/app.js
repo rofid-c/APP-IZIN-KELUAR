@@ -936,6 +936,7 @@ const App = {
   // SIGNATURE PAD & MODAL FORM PENGAJUAN
   // ==========================================
 
+
   initSignaturePad() {
     this.canvas = document.getElementById('sigCanvas');
     if (!this.canvas) return;
@@ -1189,8 +1190,6 @@ const App = {
       this.state.selectedIzin = item;
       this.state.selectedIzinId = item.id;
 
-      const isLegacyAutoAcc = item.atasanId === 'SYSTEM';
-
       const labelAtasan = document.getElementById('labelSuratAtasan');
       const labelPemohon = document.getElementById('labelSuratPemohon');
       const atasanInfoEl = document.getElementById('suratAtasanInfo');
@@ -1213,71 +1212,50 @@ const App = {
       const namaBawahAtasanEl = document.getElementById('suratNamaBawahAtasan');
       const nipAtasanEl = document.getElementById('suratNipAtasan');
 
-      if (isLegacyAutoAcc) {
-        // Fallback data arsip lama ACC sistem
-        if (labelAtasan) labelAtasan.textContent = 'Yang bertandatangan di bawah ini';
-        if (atasanInfoEl) atasanInfoEl.textContent = item.pegawaiNama;
-        if (labelPemohon) labelPemohon.textContent = 'Jabatan / NIP';
-        if (pemohonInfoEl) pemohonInfoEl.textContent = `${item.pegawaiJabatan} / NIP. ${item.pegawaiNip || '-'}`;
-        if (kalimatPenutupEl) {
-          kalimatPenutupEl.textContent = 'Demikian izin keluar kantor ini dibuat untuk digunakan sebagaimana mestinya.';
-        }
-
-        if (boxKiriStandard) boxKiriStandard.classList.add('hidden');
-        if (stampPimpinan) stampPimpinan.classList.add('hidden');
-        if (stampKode) stampKode.textContent = '';
-
-        if (tanggalTempatEl) tanggalTempatEl.textContent = `Gunung Sugih, ${formatDateIndo(item.tanggalIzin)}`;
-        if (jabatanBawahAtasanEl) jabatanBawahAtasanEl.textContent = `${item.pegawaiJabatan || 'Ketua Pengadilan Agama Gunung Sugih'},`;
-        if (ttdAtasanImg) {
-          ttdAtasanImg.src = item.ttdDigital || '';
-          ttdAtasanImg.style.display = item.ttdDigital ? 'block' : 'none';
-        }
-        if (namaBawahAtasanEl) namaBawahAtasanEl.textContent = `( ${item.pegawaiNama} )`;
-        if (nipAtasanEl) nipAtasanEl.textContent = `NIP. ${item.pegawaiNip || '....................'}`;
-
-      } else {
-        // ========================================================
-        // FORMAT SURAT IZIN RESMI (PEGAWAI & PEJABAT SAMA)
-        // Diberikan oleh Pejabat Penyetuju kepada Pemohon
-        // ========================================================
-        if (labelAtasan) labelAtasan.textContent = 'Yang bertandatangan di bawah ini';
-        if (atasanInfoEl) atasanInfoEl.textContent = `${item.atasanNama || 'Pejabat Penyetuju'} (${item.atasanJabatan || 'Pengadilan Agama Gunung Sugih'})`;
-        if (labelPemohon) labelPemohon.textContent = 'Dengan ini memberikan izin kepada';
-        if (pemohonInfoEl) pemohonInfoEl.textContent = item.pegawaiNama;
-        if (kalimatPenutupEl) {
-          kalimatPenutupEl.textContent = 'Demikian izin ini diberikan kepada yang bersangkutan untuk digunakan sebagaimana mestinya.';
-        }
-
-        // Kolom Kiri: Pemohon (Pegawai / Pejabat)
-        if (boxKiriStandard) boxKiriStandard.classList.remove('hidden');
-        if (stampPimpinan) stampPimpinan.classList.add('hidden');
-        if (ttdPemohonImg) {
-          if (item.ttdDigital) {
-            ttdPemohonImg.src = item.ttdDigital;
-            ttdPemohonImg.style.display = 'block';
-          } else {
-            ttdPemohonImg.style.display = 'none';
-          }
-        }
-        if (namaBawahPemohonEl) namaBawahPemohonEl.textContent = `( ${item.pegawaiNama} )`;
-        if (nipPemohonEl) nipPemohonEl.textContent = `NIP. ${item.pegawaiNip || '....................'}`;
-
-        // Kolom Kanan: Pejabat Penyetuju
-        if (tanggalTempatEl) tanggalTempatEl.textContent = `Gunung Sugih, ${formatDateIndo(item.tanggalIzin)}`;
-        if (jabatanBawahAtasanEl) jabatanBawahAtasanEl.textContent = `${item.atasanJabatan || 'Ketua Pengadilan Agama Gunung Sugih'},`;
-        if (ttdAtasanImg) {
-          const signatureSource = item.ttdAtasan || null;
-          if (signatureSource) {
-            ttdAtasanImg.src = signatureSource;
-            ttdAtasanImg.style.display = 'block';
-          } else {
-            ttdAtasanImg.style.display = 'none';
-          }
-        }
-        if (namaBawahAtasanEl) namaBawahAtasanEl.textContent = `( ${item.atasanNama || '....................'} )`;
-        if (nipAtasanEl) nipAtasanEl.textContent = `NIP. ${item.atasanNip || '....................'}`;
+      // ========================================================
+      // FORMAT SURAT IZIN RESMI PA GUNUNG SUGIH (KONSISTEN & BAKU)
+      // Diberikan oleh Pejabat Penyetuju kepada Pemohon
+      // ========================================================
+      if (labelAtasan) labelAtasan.textContent = 'Yang bertandatangan di bawah ini';
+      if (atasanInfoEl) {
+        atasanInfoEl.textContent = `${item.atasanNama || 'Pejabat Penyetuju'} (${item.atasanJabatan || 'Pengadilan Agama Gunung Sugih'})`;
       }
+      if (labelPemohon) labelPemohon.textContent = 'Dengan ini memberikan izin kepada';
+      if (pemohonInfoEl) {
+        pemohonInfoEl.textContent = `${item.pegawaiNama} (${item.pegawaiJabatan || 'Pegawai'})`;
+      }
+      if (kalimatPenutupEl) {
+        kalimatPenutupEl.textContent = 'Demikian izin ini diberikan kepada yang bersangkutan untuk digunakan sebagaimana mestinya.';
+      }
+
+      // Kolom Kiri: Pemohon (Pegawai / Pejabat Pemohon)
+      if (boxKiriStandard) boxKiriStandard.classList.remove('hidden');
+      if (stampPimpinan) stampPimpinan.classList.add('hidden');
+      if (ttdPemohonImg) {
+        if (item.ttdDigital) {
+          ttdPemohonImg.src = item.ttdDigital;
+          ttdPemohonImg.style.display = 'block';
+        } else {
+          ttdPemohonImg.style.display = 'none';
+        }
+      }
+      if (namaBawahPemohonEl) namaBawahPemohonEl.textContent = `( ${item.pegawaiNama} )`;
+      if (nipPemohonEl) nipPemohonEl.textContent = `NIP. ${item.pegawaiNip || '....................'}`;
+
+      // Kolom Kanan: Pejabat Penyetuju (ACC)
+      if (tanggalTempatEl) tanggalTempatEl.textContent = `Gunung Sugih, ${formatDateIndo(item.tanggalIzin)}`;
+      if (jabatanBawahAtasanEl) jabatanBawahAtasanEl.textContent = `${item.atasanJabatan || 'Ketua Pengadilan Agama Gunung Sugih'},`;
+      if (ttdAtasanImg) {
+        const signatureSource = item.ttdAtasan || null;
+        if (signatureSource) {
+          ttdAtasanImg.src = signatureSource;
+          ttdAtasanImg.style.display = 'block';
+        } else {
+          ttdAtasanImg.style.display = 'none';
+        }
+      }
+      if (namaBawahAtasanEl) namaBawahAtasanEl.textContent = `( ${item.atasanNama || '....................'} )`;
+      if (nipAtasanEl) nipAtasanEl.textContent = `NIP. ${item.atasanNip || '....................'}`;
 
       // Waktu dan Keperluan
       if (waktuInfoEl) {

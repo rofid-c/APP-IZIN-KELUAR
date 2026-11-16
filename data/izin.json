@@ -79,10 +79,10 @@
     "pegawaiNama": "tes3",
     "pegawaiNip": "565645",
     "pegawaiJabatan": "Ketua Pengadilan Agama Gunung Sugih",
-    "atasanId": "SYSTEM",
-    "atasanNama": "ACC Sistem",
-    "atasanNip": "-",
-    "atasanJabatan": "Sistem E-IZIN",
+    "atasanId": "KJ-002",
+    "atasanNama": "yu",
+    "atasanNip": "098765",
+    "atasanJabatan": "Wakil Ketua Pengadilan Agama Gunung Sugih",
     "keterangan": "dasdad",
     "tanggalIzin": "2026-11-16",
     "jamKeluar": "09:13",
@@ -94,7 +94,7 @@
     "jamKembaliAktual": null,
     "createdAt": "2026-11-16T02:13:29.326Z",
     "approvedAt": "2026-11-16T02:13:29.326Z",
-    "isPimpinan": true
+    "isPimpinan": false
   },
   {
     "id": "IZN-20261106-006",
@@ -119,28 +119,5 @@
     "createdAt": "2026-11-06T08:34:12.364Z",
     "approvedAt": null,
     "rejectedAt": "2026-11-12T03:21:22.467Z"
-  },
-  {
-    "id": "IZN-20261106-005",
-    "kodeSurat": "W11-A12/662/KP/XI/2026",
-    "pegawaiId": "PEG-001",
-    "pegawaiNama": "Ahmad Fauzi, S.Kom.",
-    "pegawaiNip": "199208152019031002",
-    "pegawaiJabatan": "Pranata Komputer Ahli Pertama",
-    "atasanId": "KJ-001",
-    "atasanNama": "Dr. H. Ahmad Zarkasi, S.H.I., M.H.",
-    "atasanNip": "197405102001121001",
-    "atasanJabatan": "Ketua Pengadilan Agama Gunung Sugih",
-    "keterangan": "Pengantaran berkas laporan berkala ke BSI Gunung Sugih",
-    "tanggalIzin": "2026-11-06",
-    "jamKeluar": "14:00",
-    "jamMasuk": "15:30",
-    "ttdDigital": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
-    "ttdAtasan": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
-    "status": "approved",
-    "catatanAtasan": "Disetujui oleh Ketua Pengadilan Agama Gunung Sugih.",
-    "jamKembaliAktual": null,
-    "createdAt": "2026-11-06T08:30:24.808Z",
-    "approvedAt": "2026-11-06T08:30:33.989Z"
   }
 ]

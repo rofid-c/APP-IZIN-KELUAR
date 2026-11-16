@@ -25,8 +25,14 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Folder static files
-app.use(express.static(path.join(__dirname, 'public')));
+// Folder static files (dengan kontrol cache agar update instan di browser & HP)
+app.use(express.static(path.join(__dirname, 'public'), {
+  setHeaders: (res) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  }
+}));
 app.use('/uploads', express.static(path.join(__dirname, 'data', 'uploads')));
 
 // Routes API
