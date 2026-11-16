@@ -2171,6 +2171,7 @@ const App = {
           <!-- Input Cepat Tambah Jenis Jabatan -->
           <div class="pt-2 border-t border-slate-200/70 flex items-center gap-2">
             <input type="text" id="inputJenis_${k.id}" placeholder="Tambah jenis jabatan untuk ${k.nama}..."
+              onkeydown="if(event.key==='Enter'){event.preventDefault();App.submitAddJenisKategori('${k.id}');}"
               class="flex-1 px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-600 font-medium">
             <button type="button" onclick="App.submitAddJenisKategori('${k.id}')"
               class="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 shrink-0">

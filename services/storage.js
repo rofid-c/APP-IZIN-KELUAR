@@ -676,7 +676,7 @@ const storage = {
       nama: cleanNama,
       peran: peran || 'ketua_jabatan',
       isLocked: false,
-      jenis: cleanJenis.length > 0 ? cleanJenis : [cleanNama]
+      jenis: cleanJenis
     };
     list.push(newKat);
     writeJSON(KATEGORI_FILE, list);
