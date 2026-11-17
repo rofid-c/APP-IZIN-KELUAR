@@ -16,19 +16,20 @@ echo.
 echo =====================================================================
 echo.
 
-:: 1. Cek koneksi & ketersediaan Git
+:: 1. Deteksi Metode Pembaruan: Git atau Bawaan Windows (curl & tar)
+set "METODE=DIRECT"
 where git >nul 2>nul
-if %errorlevel% neq 0 (
-    color 0C
-    echo [ERROR] Git tidak ditemukan di komputer ini!
-    echo Pastikan Git sudah terpasang agar dapat memperbarui aplikasi.
-    echo Unduh Git di: https://git-scm.com/download/win
-    echo.
-    pause
-    exit /b 1
+if %errorlevel% equ 0 (
+    if exist ".git" (
+        set "METODE=GIT"
+    )
 )
 
-echo [1/5] Memeriksa instalasi Git... OK!
+if "%METODE%"=="GIT" (
+    echo [1/5] Mode: Terdeteksi Git dan repositori lokal... OK!
+) else (
+    echo [1/5] Mode: Pembaruan Mandiri via Sistem Windows (Tanpa perlu install Git)... OK!
+)
 echo.
 
 :: 2. Amankan & Backup data pengguna saat ini
@@ -45,36 +46,64 @@ echo.
 
 :: 3. Sinkronisasi dengan GitHub
 echo [3/5] Mengunduh pembaruan terbaru dari GitHub...
+
+if "%METODE%"=="GIT" goto UPDATE_VIA_GIT
+goto UPDATE_VIA_DIRECT
+
+:UPDATE_VIA_GIT
 git fetch origin main
 if %errorlevel% neq 0 (
-    color 0C
-    echo.
-    echo [ERROR] Gagal terhubung ke GitHub!
-    echo Pastikan komputer terhubung ke internet dan coba kembali.
-    if exist "_temp_data_safe" rd /s /q "_temp_data_safe" >nul 2>nul
-    echo.
-    pause
-    exit /b 1
+    echo       - Git fetch gagal, mencoba beralih ke mode unduh langsung...
+    goto UPDATE_VIA_DIRECT
 )
-
-:: Reset file kode ke HEAD origin/main untuk memastikan pembaruan tidak bentrok
 git reset --hard origin/main
 if %errorlevel% neq 0 (
-    color 0C
-    echo.
-    echo [ERROR] Terjadi kendala saat menerapkan pembaruan.
-    echo Memulihkan data pengguna...
-    if exist "_temp_data_safe" (
-        xcopy /E /I /Y /Q "_temp_data_safe" "data" >nul
-        rd /s /q "_temp_data_safe" >nul 2>nul
-    )
-    echo.
-    pause
-    exit /b 1
+    echo       - Git reset gagal, mencoba beralih ke mode unduh langsung...
+    goto UPDATE_VIA_DIRECT
 )
-echo       - Kode aplikasi berhasil diperbarui ke versi terbaru!
-echo.
+echo       - Kode aplikasi berhasil diperbarui via Git!
+goto PULIHKAN_DATA
 
+:UPDATE_VIA_DIRECT
+where curl >nul 2>nul
+if %errorlevel% neq 0 (
+    color 0C
+    echo [ERROR] Layanan curl tidak tersedia di Windows ini.
+    goto GAGAL_UPDATE
+)
+
+where tar >nul 2>nul
+if %errorlevel% neq 0 (
+    color 0C
+    echo [ERROR] Layanan tar tidak tersedia di Windows ini.
+    goto GAGAL_UPDATE
+)
+
+echo       - Sedang mengunduh berkas dari GitHub (https://github.com/rofid-c/APP-IZIN-KELUAR)...
+curl -sL "https://github.com/rofid-c/APP-IZIN-KELUAR/archive/refs/heads/main.zip" -o "_update.zip"
+if not exist "_update.zip" (
+    color 0C
+    echo [ERROR] Gagal mengunduh berkas pembaruan! Pastikan laptop terhubung ke internet.
+    goto GAGAL_UPDATE
+)
+
+echo       - Mengekstrak berkas pembaruan...
+tar -xf "_update.zip"
+if not exist "APP-IZIN-KELUAR-main" (
+    color 0C
+    echo [ERROR] Gagal mengekstrak berkas pembaruan.
+    goto GAGAL_UPDATE
+)
+
+echo       - Menyalin pembaruan kode aplikasi...
+xcopy /E /I /Y /Q "APP-IZIN-KELUAR-main\*" "." >nul
+rd /s /q "APP-IZIN-KELUAR-main" >nul 2>nul
+del /f /q "_update.zip" >nul 2>nul
+echo       - Kode aplikasi berhasil diperbarui ke versi terbaru!
+goto PULIHKAN_DATA
+
+:PULIHKAN_DATA
+echo.
 :: 4. Kembalikan data pengguna 100% utuh
 echo [4/5] Memulihkan seluruh data pengguna (surat izin, akun, kategori)...
 if exist "_temp_data_safe" (
@@ -85,12 +114,12 @@ if exist "_temp_data_safe" (
 echo.
 
 :: 5. Periksa dependensi pustaka npm
-echo [5/5] Memeriksa dan memperbarui library aplikasi (npm install)...
+echo [5/5] Memeriksa dependensi library aplikasi (npm install)...
 where node >nul 2>nul
 if %errorlevel% equ 0 (
     call npm install --no-audit --no-fund
 ) else (
-    echo       - Node.js belum terdeteksi di PATH, lewati npm install.
+    echo       - Node.js belum terpasang/terdeteksi di PATH, lewati npm install.
 )
 echo.
 
@@ -115,3 +144,17 @@ if /i "%JALANKAN%"=="Y" (
 
 pause
 exit /b 0
+
+:GAGAL_UPDATE
+echo.
+echo [INFO] Pembaruan tidak dapat diselesaikan secara otomatis.
+if exist "_temp_data_safe" (
+    xcopy /E /I /Y /Q "_temp_data_safe" "data" >nul
+    rd /s /q "_temp_data_safe" >nul 2>nul
+    echo Data pengguna telah dipulihkan dengan aman.
+)
+if exist "APP-IZIN-KELUAR-main" rd /s /q "APP-IZIN-KELUAR-main" >nul 2>nul
+if exist "_update.zip" del /f /q "_update.zip" >nul 2>nul
+echo.
+pause
+exit /b 1
