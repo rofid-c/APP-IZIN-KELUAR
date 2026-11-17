@@ -16,19 +16,18 @@ echo.
 echo =====================================================================
 echo.
 
-:: 1. Deteksi Metode Pembaruan: Git atau Bawaan Windows (curl & tar)
-set "METODE=DIRECT"
+:: 1. Deteksi Metode Pembaruan: Git atau Unduh Langsung via Windows
+set METODE=DIRECT
 where git >nul 2>nul
-if %errorlevel% equ 0 (
-    if exist ".git" (
-        set "METODE=GIT"
-    )
-)
+if %errorlevel% neq 0 goto METODE_SELESAI
+if not exist ".git" goto METODE_SELESAI
+set METODE=GIT
 
+:METODE_SELESAI
 if "%METODE%"=="GIT" (
     echo [1/5] Mode: Terdeteksi Git dan repositori lokal... OK!
 ) else (
-    echo [1/5] Mode: Pembaruan Mandiri via Sistem Windows (Tanpa perlu install Git)... OK!
+    echo [1/5] Mode: Pembaruan Mandiri via Sistem Windows (Tanpa perlu Git)... OK!
 )
 echo.
 
@@ -52,50 +51,32 @@ goto UPDATE_VIA_DIRECT
 
 :UPDATE_VIA_GIT
 git fetch origin main
-if %errorlevel% neq 0 (
-    echo       - Git fetch gagal, mencoba beralih ke mode unduh langsung...
-    goto UPDATE_VIA_DIRECT
-)
+if %errorlevel% neq 0 goto GIT_GAGAL
 git reset --hard origin/main
-if %errorlevel% neq 0 (
-    echo       - Git reset gagal, mencoba beralih ke mode unduh langsung...
-    goto UPDATE_VIA_DIRECT
-)
+if %errorlevel% neq 0 goto GIT_GAGAL
 echo       - Kode aplikasi berhasil diperbarui via Git!
 goto PULIHKAN_DATA
 
+:GIT_GAGAL
+echo       - Git tidak merespon, beralih ke mode unduh langsung...
+goto UPDATE_VIA_DIRECT
+
 :UPDATE_VIA_DIRECT
 where curl >nul 2>nul
-if %errorlevel% neq 0 (
-    color 0C
-    echo [ERROR] Layanan curl tidak tersedia di Windows ini.
-    goto GAGAL_UPDATE
-)
+if %errorlevel% neq 0 goto NO_CURL
 
 where tar >nul 2>nul
-if %errorlevel% neq 0 (
-    color 0C
-    echo [ERROR] Layanan tar tidak tersedia di Windows ini.
-    goto GAGAL_UPDATE
-)
+if %errorlevel% neq 0 goto NO_TAR
 
-echo       - Sedang mengunduh berkas dari GitHub (https://github.com/rofid-c/APP-IZIN-KELUAR)...
+echo       - Mengunduh paket pembaruan dari GitHub...
 curl -sL "https://github.com/rofid-c/APP-IZIN-KELUAR/archive/refs/heads/main.zip" -o "_update.zip"
-if not exist "_update.zip" (
-    color 0C
-    echo [ERROR] Gagal mengunduh berkas pembaruan! Pastikan laptop terhubung ke internet.
-    goto GAGAL_UPDATE
-)
+if not exist "_update.zip" goto DOWNLOAD_GAGAL
 
-echo       - Mengekstrak berkas pembaruan...
+echo       - Mengekstrak paket pembaruan...
 tar -xf "_update.zip"
-if not exist "APP-IZIN-KELUAR-main" (
-    color 0C
-    echo [ERROR] Gagal mengekstrak berkas pembaruan.
-    goto GAGAL_UPDATE
-)
+if not exist "APP-IZIN-KELUAR-main" goto EKSTRAK_GAGAL
 
-echo       - Menyalin pembaruan kode aplikasi...
+echo       - Memperbarui berkas kode aplikasi...
 xcopy /E /I /Y /Q "APP-IZIN-KELUAR-main\*" "." >nul
 rd /s /q "APP-IZIN-KELUAR-main" >nul 2>nul
 del /f /q "_update.zip" >nul 2>nul
@@ -119,7 +100,7 @@ where node >nul 2>nul
 if %errorlevel% equ 0 (
     call npm install --no-audit --no-fund
 ) else (
-    echo       - Node.js belum terpasang/terdeteksi di PATH, lewati npm install.
+    echo       - Node.js belum terpasang di komputer ini, lewati npm install.
 )
 echo.
 
@@ -142,19 +123,43 @@ if /i "%JALANKAN%"=="Y" (
     exit /b 0
 )
 
-pause
+echo.
+echo Selesai. Tekan tombol apa saja untuk menutup...
+pause >nul
 exit /b 0
 
-:GAGAL_UPDATE
+:NO_CURL
+color 0C
 echo.
-echo [INFO] Pembaruan tidak dapat diselesaikan secara otomatis.
+echo [ERROR] Layanan curl tidak tersedia di Windows ini.
+goto BERSIHKAN_GAGAL
+
+:NO_TAR
+color 0C
+echo.
+echo [ERROR] Layanan tar tidak tersedia di Windows ini.
+goto BERSIHKAN_GAGAL
+
+:DOWNLOAD_GAGAL
+color 0C
+echo.
+echo [ERROR] Gagal mengunduh berkas dari GitHub. Pastikan ada koneksi internet.
+goto BERSIHKAN_GAGAL
+
+:EKSTRAK_GAGAL
+color 0C
+echo.
+echo [ERROR] Gagal mengekstrak berkas pembaruan.
+goto BERSIHKAN_GAGAL
+
+:BERSIHKAN_GAGAL
 if exist "_temp_data_safe" (
     xcopy /E /I /Y /Q "_temp_data_safe" "data" >nul
     rd /s /q "_temp_data_safe" >nul 2>nul
-    echo Data pengguna telah dipulihkan dengan aman.
 )
 if exist "APP-IZIN-KELUAR-main" rd /s /q "APP-IZIN-KELUAR-main" >nul 2>nul
 if exist "_update.zip" del /f /q "_update.zip" >nul 2>nul
 echo.
-pause
+echo Tekan tombol apa saja untuk menutup...
+pause >nul
 exit /b 1
