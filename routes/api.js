@@ -37,7 +37,7 @@ router.post('/login', (req, res) => {
 
 // POST /api/register - Pendaftaran Akun Pegawai Baru
 router.post('/register', (req, res) => {
-  const { nama, nip, password, jabatan } = req.body;
+  const { nama, nip, password, jabatan, kategoriId, kategoriNama } = req.body;
   const credential = nip || password;
   if (!nama || !credential) {
     return res.status(400).json({
@@ -46,7 +46,7 @@ router.post('/register', (req, res) => {
     });
   }
 
-  const result = storage.registerPegawai(nama, credential, jabatan);
+  const result = storage.registerPegawai(nama, credential, jabatan, kategoriId, kategoriNama);
   if (!result.success) {
     return res.status(400).json(result);
   }

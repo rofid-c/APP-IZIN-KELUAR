@@ -271,11 +271,12 @@ const storage = {
     };
   },
 
-  // Pendaftaran Akun Pegawai Baru (Menggunakan Nama dan NIP)
-  registerPegawai(nama, nip, jabatan = 'Pegawai') {
+  // Pendaftaran Akun Pegawai Baru (Menggunakan Nama, NIP, dan Kategori Jabatan)
+  registerPegawai(nama, nip, jabatan = 'Pegawai', kategoriId = null, kategoriNama = null) {
     const list = readJSON(PEGAWAI_FILE, DEFAULT_USERS);
     const cleanNama = (nama || '').trim();
     const cleanNip = (nip || '').replace(/[\s-]/g, '').trim();
+    const cleanJabatan = (jabatan || 'Pegawai').trim();
 
     if (!cleanNama || !cleanNip) {
       return { success: false, message: 'Nama dan NIP wajib diisi.' };
@@ -311,14 +312,31 @@ const storage = {
       };
     }
 
+    // Sinkronisasi Kategori Jabatan & Penentuan Role
+    const kategoriList = this.getAllKategoriJabatan();
+    let matchedKat = null;
+    if (kategoriId) {
+      matchedKat = kategoriList.find(k => k.id === kategoriId);
+    }
+    if (!matchedKat && cleanJabatan) {
+      matchedKat = kategoriList.find(k => (k.jenis || []).some(j => j.toLowerCase() === cleanJabatan.toLowerCase()));
+    }
+
+    const finalKategoriId = matchedKat ? matchedKat.id : (kategoriId || null);
+    const finalKategoriNama = matchedKat ? matchedKat.nama : (kategoriNama || null);
+    const role = (matchedKat && matchedKat.peran === 'ketua_jabatan') ? 'ketua_jabatan' : 'pegawai';
+    const idPrefix = role === 'ketua_jabatan' ? 'KJ' : 'PEG';
+
     const newUser = {
-      id: `PEG-${Date.now().toString().slice(-4)}`,
+      id: `${idPrefix}-${Date.now().toString().slice(-4)}`,
       nama: cleanNama,
       username: cleanNama,
       nip: cleanNip,
       password: cleanNip,
-      jabatan: (jabatan || 'Pegawai').trim(),
-      role: 'pegawai',
+      jabatan: cleanJabatan,
+      kategoriId: finalKategoriId,
+      kategoriNama: finalKategoriNama,
+      role: role,
       statusAkun: 'pending', // Akun baru wajib persetujuan (ACC) dari Admin
       createdAt: new Date().toISOString()
     };
@@ -334,6 +352,8 @@ const storage = {
         nama: newUser.nama,
         nip: newUser.nip,
         jabatan: newUser.jabatan,
+        kategoriId: newUser.kategoriId,
+        kategoriNama: newUser.kategoriNama,
         role: newUser.role,
         statusAkun: newUser.statusAkun
       }

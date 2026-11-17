@@ -76,6 +76,7 @@ const App = {
     document.getElementById('viewDashboardKetua').classList.add('hidden');
     document.getElementById('viewDashboardAdmin').classList.add('hidden');
     this.switchAuthTab('login');
+    this.loadPublicKategoriJabatan();
     this.state.currentUser = null;
     lucide.createIcons();
   },
@@ -127,6 +128,7 @@ const App = {
     const formRegister = document.getElementById('formRegister');
 
     if (tab === 'register') {
+      this.loadPublicKategoriJabatan();
       if (tabBtnRegister) {
         tabBtnRegister.className = 'flex-1 py-2 rounded-xl text-center transition bg-white text-court-800 shadow-xs font-bold';
       }
@@ -204,16 +206,87 @@ const App = {
     }
   },
 
-  // Proses Pendaftaran Akun Pegawai Baru (Nama, Jabatan & NIP)
+  // Memuat data Master Kategori Jabatan untuk Pendaftaran Publik
+  async loadPublicKategoriJabatan() {
+    try {
+      const res = await fetch('/api/kategori-jabatan');
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        this._publicKategoriJabatan = json.data;
+        this.renderPublicKategoriOptions();
+      }
+    } catch (e) {
+      console.error('Gagal memuat kategori jabatan publik:', e);
+    }
+  },
+
+  renderPublicKategoriOptions() {
+    const selKategori = document.getElementById('regKategori');
+    if (!selKategori) return;
+
+    const list = this._publicKategoriJabatan || [];
+    if (list.length === 0) {
+      selKategori.innerHTML = '<option value="">-- Kategori belum tersedia --</option>';
+      this.onRegKategoriChange('');
+      return;
+    }
+
+    selKategori.innerHTML = '<option value="">-- Pilih Kategori Jabatan --</option>' +
+      list.map(k => `<option value="${k.id}">${k.nama}</option>`).join('');
+
+    // Default ke kategori pegawai jika ada
+    const defaultKat = list.find(k => k.id === 'kat-pegawai') || list[0];
+    if (defaultKat && !selKategori.value) {
+      selKategori.value = defaultKat.id;
+      this.onRegKategoriChange(defaultKat.id);
+    }
+  },
+
+  onRegKategoriChange(kategoriId) {
+    const selJabatan = document.getElementById('regJabatan');
+    if (!selJabatan) return;
+
+    if (!kategoriId) {
+      selJabatan.innerHTML = '<option value="">-- Pilih Kategori Terlebih Dahulu --</option>';
+      return;
+    }
+
+    const kat = (this._publicKategoriJabatan || []).find(k => k.id === kategoriId);
+    const jenisList = (kat && Array.isArray(kat.jenis)) ? kat.jenis : [];
+
+    if (jenisList.length === 0) {
+      selJabatan.innerHTML = '<option value="">-- Belum ada jenis jabatan di kategori ini --</option>';
+      return;
+    }
+
+    selJabatan.innerHTML = '<option value="">-- Pilih Jenis Jabatan Resmi --</option>' +
+      jenisList.map(j => `<option value="${j}">${j}</option>`).join('');
+  },
+
+  // Proses Pendaftaran Akun Pegawai Baru (Nama, Kategori, Jabatan & NIP)
   async handleRegister(e) {
     e.preventDefault();
     const nama = document.getElementById('regNama').value.trim();
-    const jabatan = (document.getElementById('regJabatan')?.value || 'Pegawai').trim();
+    const selKategori = document.getElementById('regKategori');
+    const kategoriId = selKategori ? selKategori.value : '';
+    const kategoriNama = (selKategori && selKategori.selectedIndex >= 0 && selKategori.value) ? selKategori.options[selKategori.selectedIndex].text : '';
+    const selJabatan = document.getElementById('regJabatan');
+    const jabatan = selJabatan ? selJabatan.value.trim() : '';
     const nip = document.getElementById('regNip').value.trim();
     const btn = document.getElementById('btnSubmitRegister');
 
     if (!nama || !nip) {
       this.showToast('Nama dan NIP wajib diisi.', 'error');
+      return;
+    }
+
+    if (!kategoriId) {
+      this.showToast('Harap pilih Kategori Jabatan.', 'warning');
+      return;
+    }
+
+    if (!jabatan) {
+      this.showToast('Harap pilih Jenis Jabatan Resmi dari kategori.', 'warning');
       return;
     }
 
@@ -225,13 +298,14 @@ const App = {
       const res = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nama, jabatan, nip })
+        body: JSON.stringify({ nama, jabatan, nip, kategoriId, kategoriNama })
       });
       const json = await res.json();
 
       if (json.success) {
         // Reset form pendaftaran
         document.getElementById('formRegister')?.reset();
+        this.renderPublicKategoriOptions();
 
         // Pindah ke tab login dan otomatis isikan Nama & NIP yang baru didaftarkan
         this.switchAuthTab('login');
@@ -1529,7 +1603,7 @@ const App = {
         const notif = new Notification(title, {
           body: body,
           icon: '/logo-pa.png',
-          badge: '/logo-pa.svg'
+          badge: '/logo-pa.png'
         });
         if (typeof onClick === 'function') {
           notif.onclick = () => {
