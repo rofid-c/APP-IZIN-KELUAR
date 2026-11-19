@@ -965,7 +965,7 @@ const App = {
         if (countPegSedangIzin) countPegSedangIzin.textContent = json.data.sedangIzin;
         if (badgePegSedangIzin) {
           if (json.data.sedangIzin > 0) {
-            badgePegSedangIzin.textContent = `${json.data.sedangIzin} Izin`;
+            badgePegSedangIzin.textContent = json.data.sedangIzin;
             badgePegSedangIzin.classList.remove('hidden');
           } else {
             badgePegSedangIzin.classList.add('hidden');
@@ -980,7 +980,7 @@ const App = {
         if (countKetSedangIzin) countKetSedangIzin.textContent = json.data.sedangIzin;
         if (badgeKetSedangIzin) {
           if (json.data.sedangIzin > 0) {
-            badgeKetSedangIzin.textContent = `${json.data.sedangIzin} Izin`;
+            badgeKetSedangIzin.textContent = json.data.sedangIzin;
             badgeKetSedangIzin.classList.remove('hidden');
           } else {
             badgeKetSedangIzin.classList.add('hidden');
