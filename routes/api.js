@@ -54,6 +54,11 @@ router.post('/register', (req, res) => {
   res.status(201).json(result);
 });
 
+// GET /api/presence — Live status keberadaan pegawai (di kantor vs sedang izin keluar)
+router.get('/presence', (req, res) => {
+  res.json({ success: true, data: storage.getMonitoringPegawai() });
+});
+
 // GET /api/atasan - Daftar Ketua Jabatan
 router.get('/atasan', (req, res) => {
   res.json({ success: true, data: storage.getAllKetuaJabatan() });

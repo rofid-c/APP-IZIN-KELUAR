@@ -190,50 +190,134 @@
           </span>
         </div>
 
-        <!-- SATU TOMBOL AJUKAN IZIN KELUAR -->
-        <button onclick="App.openPengajuanModal()" 
-          class="w-full py-3.5 rounded-2xl text-xs font-extrabold bg-court-700 hover:bg-court-800 text-white shadow-md shadow-court-800/20 active:scale-98 transition flex items-center justify-center gap-2">
-          <i data-lucide="plus-circle" class="w-4 h-4"></i>
-          Ajukan Izin Keluar Kantor
-        </button>
-
-        <!-- KARTU IZIN AKTIF (TANPA QR CODE, HANYA INFO & CHECK-IN) -->
-        <div id="pegawaiActiveCard" class="hidden">
-          <!-- Diisi otomatis oleh JS -->
+        <!-- TAB NAVIGASI PEGAWAI: IZIN SAYA vs KEBERADAAN PEGAWAI -->
+        <div class="flex p-1 bg-slate-200/90 rounded-2xl text-xs font-bold gap-1">
+          <button id="btnPegawaiTabIzin" type="button" onclick="App.switchPegawaiTab('izin')"
+            class="flex-1 py-2 px-3 rounded-xl transition text-center flex items-center justify-center gap-1.5 bg-court-700 text-white shadow-xs font-bold">
+            <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+            <span>Izin Keluar Saya</span>
+          </button>
+          <button id="btnPegawaiTabMonitoring" type="button" onclick="App.switchPegawaiTab('monitoring')"
+            class="flex-1 py-2 px-3 rounded-xl transition text-center flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900 font-semibold">
+            <i data-lucide="users" class="w-3.5 h-3.5"></i>
+            <span>Keberadaan Pegawai</span>
+            <span id="badgePegawaiSedangIzin" class="hidden text-[10px] bg-amber-500 text-white px-1.5 py-0.2 rounded-full font-bold">0</span>
+          </button>
         </div>
 
-        <!-- DAFTAR RIWAYAT IZIN PEGAWAI -->
-        <div class="space-y-3 pt-2">
-          <div class="flex items-center justify-between">
-            <h3 class="text-xs font-extrabold text-slate-800 uppercase tracking-wider">
-              Riwayat Izin Keluar
-            </h3>
-            <span id="pegawaiIzinCount" class="text-[11px] text-slate-500 font-semibold">-</span>
+        <!-- SECTION 1: PERMOHONAN & RIWAYAT IZIN PEGAWAI -->
+        <div id="pegawaiSectionIzin" class="space-y-4">
+          <!-- SATU TOMBOL AJUKAN IZIN KELUAR -->
+          <button onclick="App.openPengajuanModal()" 
+            class="w-full py-3.5 rounded-2xl text-xs font-extrabold bg-court-700 hover:bg-court-800 text-white shadow-md shadow-court-800/20 active:scale-98 transition flex items-center justify-center gap-2">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+            Ajukan Izin Keluar Kantor
+          </button>
+
+          <!-- KARTU IZIN AKTIF (TANPA QR CODE, HANYA INFO & CHECK-IN) -->
+          <div id="pegawaiActiveCard" class="hidden">
+            <!-- Diisi otomatis oleh JS -->
           </div>
 
-          <!-- Filter Tab -->
-          <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
-            <button data-filter="all" class="pegawai-filter-btn px-3 py-1 rounded-full text-[11px] font-bold bg-court-800 text-white">
-              Semua
-            </button>
-            <button data-filter="pending" class="pegawai-filter-btn px-3 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
-              Menunggu
-            </button>
-            <button data-filter="approved" class="pegawai-filter-btn px-3 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
-              Disetujui
-            </button>
-            <button data-filter="completed" class="pegawai-filter-btn px-3 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
-              Selesai
-            </button>
+          <!-- DAFTAR RIWAYAT IZIN PEGAWAI -->
+          <div class="space-y-3 pt-2">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-extrabold text-slate-800 uppercase tracking-wider">
+                Riwayat Izin Keluar
+              </h3>
+              <span id="pegawaiIzinCount" class="text-[11px] text-slate-500 font-semibold">-</span>
+            </div>
+
+            <!-- Filter Tab -->
+            <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+              <button data-filter="all" class="pegawai-filter-btn px-3 py-1 rounded-full text-[11px] font-bold bg-court-800 text-white">
+                Semua
+              </button>
+              <button data-filter="pending" class="pegawai-filter-btn px-3 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                Menunggu
+              </button>
+              <button data-filter="approved" class="pegawai-filter-btn px-3 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                Disetujui
+              </button>
+              <button data-filter="completed" class="pegawai-filter-btn px-3 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                Selesai
+              </button>
+            </div>
+
+            <!-- List Riwayat Pegawai -->
+            <div id="pegawaiIzinList" class="space-y-2.5">
+              <!-- Diisi otomatis oleh JS: Pegawai TIDAK memiliki tombol Setujui/Tolak! Hanya tombol Hapus jika pending -->
+            </div>
+
+            <div id="pegawaiEmptyState" class="hidden py-8 text-center text-xs text-slate-400">
+              Belum ada data izin keluar.
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 2: KEBERADAAN PEGAWAI HARI INI (DI KANTOR vs SEDANG IZIN) -->
+        <div id="pegawaiSectionMonitoring" class="space-y-3.5 hidden">
+          <!-- Ringkasan Keberadaan -->
+          <div class="grid grid-cols-2 gap-2.5">
+            <div class="bg-emerald-50 border border-emerald-200/80 rounded-2xl p-3 flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <i data-lucide="building" class="w-4 h-4"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="text-[10px] font-semibold text-emerald-800">Di Kantor</p>
+                <p id="countPegawaiDiKantor" class="text-lg font-black text-emerald-950 leading-tight">0</p>
+              </div>
+            </div>
+            <div class="bg-amber-50 border border-amber-200/80 rounded-2xl p-3 flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <i data-lucide="clock" class="w-4 h-4"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="text-[10px] font-semibold text-amber-800">Sedang Izin</p>
+                <p id="countPegawaiSedangIzin" class="text-lg font-black text-amber-950 leading-tight">0</p>
+              </div>
+            </div>
           </div>
 
-          <!-- List Riwayat Pegawai -->
-          <div id="pegawaiIzinList" class="space-y-2.5">
-            <!-- Diisi otomatis oleh JS: Pegawai TIDAK memiliki tombol Setujui/Tolak! Hanya tombol Hapus jika pending -->
+          <!-- Search & Filter Controls -->
+          <div class="space-y-2">
+            <div class="relative">
+              <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+              <input type="text" id="searchMonitoringPegawai" oninput="App.onSearchMonitoring(this.value)"
+                placeholder="Cari nama pegawai, jabatan, atau NIP..."
+                class="w-full pl-9 pr-3 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-court-600">
+            </div>
+
+            <!-- Filter Chips -->
+            <div class="flex items-center gap-1.5 overflow-x-auto pb-0.5 text-xs">
+              <button onclick="App.setMonitoringFilter('all')" data-mon-filter="all"
+                class="mon-filter-btn px-3 py-1 rounded-full text-[11px] font-bold bg-court-800 text-white">
+                Semua Pegawai
+              </button>
+              <button onclick="App.setMonitoringFilter('sedang_izin')" data-mon-filter="sedang_izin"
+                class="mon-filter-btn px-3 py-1 rounded-full text-[11px] font-semibold bg-white text-slate-600 border border-slate-200">
+                Sedang Izin
+              </button>
+              <button onclick="App.setMonitoringFilter('di_kantor')" data-mon-filter="di_kantor"
+                class="mon-filter-btn px-3 py-1 rounded-full text-[11px] font-semibold bg-white text-slate-600 border border-slate-200">
+                Di Kantor
+              </button>
+            </div>
           </div>
 
-          <div id="pegawaiEmptyState" class="hidden py-8 text-center text-xs text-slate-400">
-            Belum ada data izin keluar.
+          <!-- Petunjuk Klik Detail -->
+          <div class="bg-blue-50 border border-blue-200/80 rounded-xl p-2.5 flex items-center gap-2 text-[11px] text-blue-900">
+            <i data-lucide="info" class="w-4 h-4 text-blue-600 shrink-0"></i>
+            <span>Klik pegawai untuk melihat rincian jam izin dan atasan penandatangan.</span>
+          </div>
+
+          <!-- List Pegawai -->
+          <div id="listMonitoringPegawai" class="space-y-2">
+            <!-- Diisi otomatis oleh JS -->
+          </div>
+
+          <div id="emptyMonitoringPegawai" class="hidden py-8 text-center text-xs text-slate-400">
+            Tidak ada pegawai yang sesuai dengan filter pencarian.
           </div>
         </div>
 
@@ -291,17 +375,24 @@
           </div>
         </div>
 
-        <!-- TAB NAVIGASI PIMPINAN: PERSETUJUAN (ACC) vs IZIN SAYA (IZIN) -->
+        <!-- TAB NAVIGASI PIMPINAN: PERSETUJUAN (ACC) vs IZIN SAYA (IZIN) vs KEBERADAAN PEGAWAI -->
         <div class="flex p-1 bg-slate-200/90 rounded-2xl text-xs font-bold gap-1">
           <button id="btnKetuaTabAcc" type="button" onclick="App.switchKetuaTab('acc')"
-            class="flex-1 py-2 px-3 rounded-xl transition text-center flex items-center justify-center gap-1.5 bg-amber-700 text-white shadow-xs font-bold">
+            class="flex-1 py-2 px-2 rounded-xl transition text-center flex items-center justify-center gap-1 bg-amber-700 text-white shadow-xs font-bold text-[11px]">
             <i data-lucide="check-square" class="w-3.5 h-3.5"></i>
-            <span>Persetujuan Izin (ACC)</span>
+            <span>Persetujuan (ACC)</span>
+            <span id="ketuaTabAccBadge" class="hidden text-[9px] bg-red-500 text-white px-1.5 py-0.2 rounded-full font-bold">0</span>
           </button>
           <button id="btnKetuaTabIzin" type="button" onclick="App.switchKetuaTab('izin')"
-            class="flex-1 py-2 px-3 rounded-xl transition text-center flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900 font-semibold">
+            class="flex-1 py-2 px-2 rounded-xl transition text-center flex items-center justify-center gap-1 text-slate-600 hover:text-slate-900 font-semibold text-[11px]">
             <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
-            <span>Izin Keluar Saya</span>
+            <span>Izin Saya</span>
+          </button>
+          <button id="btnKetuaTabMonitoring" type="button" onclick="App.switchKetuaTab('monitoring')"
+            class="flex-1 py-2 px-2 rounded-xl transition text-center flex items-center justify-center gap-1 text-slate-600 hover:text-slate-900 font-semibold text-[11px]">
+            <i data-lucide="users" class="w-3.5 h-3.5"></i>
+            <span>Keberadaan</span>
+            <span id="badgeKetuaSedangIzin" class="hidden text-[9px] bg-amber-500 text-white px-1.5 py-0.2 rounded-full font-bold">0</span>
           </button>
         </div>
 
@@ -388,6 +479,72 @@
             <div id="ketuaMyEmptyState" class="hidden py-8 text-center text-xs text-slate-400">
               Belum ada riwayat izin keluar kantor.
             </div>
+          </div>
+        </div>
+
+        <!-- SECTION 3: KEBERADAAN PEGAWAI (PANEL PIMPINAN) -->
+        <div id="ketuaSectionMonitoring" class="space-y-3.5 hidden">
+          <!-- Ringkasan Keberadaan Hari Ini -->
+          <div class="grid grid-cols-2 gap-2.5">
+            <div class="bg-emerald-50 border border-emerald-200/80 rounded-2xl p-3 flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <i data-lucide="building" class="w-4 h-4"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="text-[10px] font-semibold text-emerald-800">Di Kantor</p>
+                <p id="countKetuaDiKantor" class="text-lg font-black text-emerald-950 leading-tight">0</p>
+              </div>
+            </div>
+            <div class="bg-amber-50 border border-amber-200/80 rounded-2xl p-3 flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-amber-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <i data-lucide="clock" class="w-4 h-4"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="text-[10px] font-semibold text-amber-800">Sedang Izin</p>
+                <p id="countKetuaSedangIzin" class="text-lg font-black text-amber-950 leading-tight">0</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Search & Filter Controls -->
+          <div class="space-y-2">
+            <div class="relative">
+              <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+              <input type="text" id="searchMonitoringKetua" oninput="App.onSearchMonitoring(this.value)"
+                placeholder="Cari nama pegawai, jabatan, atau NIP..."
+                class="w-full pl-9 pr-3 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-amber-600">
+            </div>
+
+            <!-- Filter Chips -->
+            <div class="flex items-center gap-1.5 overflow-x-auto pb-0.5 text-xs">
+              <button onclick="App.setMonitoringFilter('all')" data-mon-filter="all"
+                class="mon-filter-btn px-3 py-1 rounded-full text-[11px] font-bold bg-amber-700 text-white">
+                Semua Pegawai
+              </button>
+              <button onclick="App.setMonitoringFilter('sedang_izin')" data-mon-filter="sedang_izin"
+                class="mon-filter-btn px-3 py-1 rounded-full text-[11px] font-semibold bg-white text-slate-600 border border-slate-200">
+                Sedang Izin
+              </button>
+              <button onclick="App.setMonitoringFilter('di_kantor')" data-mon-filter="di_kantor"
+                class="mon-filter-btn px-3 py-1 rounded-full text-[11px] font-semibold bg-white text-slate-600 border border-slate-200">
+                Di Kantor
+              </button>
+            </div>
+          </div>
+
+          <!-- Petunjuk Klik Detail -->
+          <div class="bg-amber-50/80 border border-amber-200 rounded-xl p-2.5 flex items-center gap-2 text-[11px] text-amber-950">
+            <i data-lucide="info" class="w-4 h-4 text-amber-600 shrink-0"></i>
+            <span>Klik pegawai untuk melihat rincian jam izin, atasan penandatangan, dan surat izin.</span>
+          </div>
+
+          <!-- List Pegawai -->
+          <div id="listMonitoringKetua" class="space-y-2">
+            <!-- Diisi otomatis oleh JS -->
+          </div>
+
+          <div id="emptyMonitoringKetua" class="hidden py-8 text-center text-xs text-slate-400">
+            Tidak ada pegawai yang sesuai dengan filter pencarian.
           </div>
         </div>
 
@@ -1225,13 +1382,71 @@
     </div>
   </div>
 
+  <!-- ========================================================================= -->
+  <!-- MODAL DETAIL KEBERADAAN / IZIN PEGAWAI                                     -->
+  <!-- ========================================================================= -->
+  <div id="modalDetailKeberadaan" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 modal-hidden">
+    <div class="bg-white rounded-2xl w-full max-w-sm sm:max-w-md shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in duration-200">
+      
+      <!-- Header Modal -->
+      <div class="bg-court-800 text-white px-5 py-4 flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-emerald-300">
+            <i data-lucide="user-check" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="text-xs font-extrabold text-white">Status Keberadaan Pegawai</h3>
+            <p class="text-[10px] text-emerald-200">PA Gunung Sugih</p>
+          </div>
+        </div>
+        <button onclick="App.closeDetailKeberadaanModal()" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Body Modal -->
+      <div class="p-5 overflow-y-auto space-y-3.5 text-xs">
+        
+        <!-- Identitas Pegawai -->
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-1">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <p class="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Identitas Pegawai</p>
+              <h4 id="detKeberadaanNama" class="text-sm font-black text-slate-900 leading-tight">-</h4>
+              <p id="detKeberadaanJabatan" class="text-xs font-semibold text-court-700 mt-0.5">-</p>
+              <p id="detKeberadaanNip" class="text-[11px] text-slate-500 font-mono mt-0.5">NIP: -</p>
+            </div>
+            <div id="detKeberadaanBadge" class="shrink-0">
+              <!-- Diisi otomatis -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Detail Keberadaan & Izin (Dinamis) -->
+        <div id="detKeberadaanContent" class="space-y-3">
+          <!-- Diisi otomatis oleh App.openDetailKeberadaanModal -->
+        </div>
+
+      </div>
+
+      <!-- Footer Modal -->
+      <div class="bg-slate-50 px-5 py-3 border-t border-slate-100 flex items-center justify-end gap-2 shrink-0">
+        <button onclick="App.closeDetailKeberadaanModal()" 
+          class="px-4 py-2 rounded-xl text-xs font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-100 transition shadow-2xs">
+          Tutup
+        </button>
+      </div>
+
+    </div>
+  </div>
+
   <!-- Live Pop-up Notification Container (Suara + Pop-up Alert Realtime) -->
   <div id="livePopupContainer" class="fixed top-4 right-4 z-[70] flex flex-col gap-3 max-w-sm w-full pointer-events-none px-3 sm:px-0"></div>
 
   <!-- Toast Container -->
   <div id="toastContainer" class="fixed top-3 left-4 right-4 z-50 flex flex-col gap-2 max-w-sm mx-auto pointer-events-none"></div>
 
-  <!-- App Script (Cache buster v=2.6) -->
-  <script src="/js/app.js?v=2.6"></script>
+  <!-- App Script (Cache buster v=2.7) -->
+  <script src="/js/app.js?v=2.7"></script>
 </body>
 </html>

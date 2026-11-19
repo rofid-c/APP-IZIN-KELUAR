@@ -1,5 +1,28 @@
 // E-IZIN PA Gunung Sugih - Pegawai & Ketua Jabatan Controller
 
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function formatDateTimeIndo(isoStr) {
+  if (!isoStr) return '-';
+  try {
+    const d = new Date(isoStr);
+    if (isNaN(d.getTime())) return isoStr;
+    const dateFormatted = formatDateIndo(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+    const timeFormatted = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    return `${dateFormatted}, ${timeFormatted} WIB`;
+  } catch (e) {
+    return isoStr;
+  }
+}
+
 function formatDateIndo(dateStr, includeDay = false) {
   if (!dateStr) return '';
   const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
@@ -27,6 +50,10 @@ const App = {
     ketuaMyIzinList: [],
     ketuaTab: 'acc',
     ketuaMyFilter: 'all',
+    pegawaiTab: 'izin',
+    presenceData: null,
+    monitoringFilter: 'all',
+    monitoringSearch: '',
     pegawaiFilter: 'all',
     ketuaFilter: 'pending',
     selectedIzin: null,
@@ -105,17 +132,20 @@ const App = {
       await this.loadAtasanList();
       await this.loadKetuaIzinList();
       await this.loadKetuaMyIzinList();
+      await this.loadPresenceData();
       this.startLivePolling();
     } else {
       // Tampilan Pegawai Biasa
-      this.stopLivePolling();
       document.getElementById('viewDashboardKetua').classList.add('hidden');
       document.getElementById('viewDashboardPegawai').classList.remove('hidden');
       document.getElementById('pegawaiHeaderNama').textContent = u.nama;
       document.getElementById('pegawaiNamaCard').textContent = u.nama;
       document.getElementById('pegawaiJabatanCard').textContent = u.jabatan || 'Pegawai';
+      this.switchPegawaiTab(this.state.pegawaiTab || 'izin');
       await this.loadAtasanList();
       await this.loadPegawaiIzinList();
+      await this.loadPresenceData();
+      this.startLivePolling();
     }
     lucide.createIcons();
   },
@@ -843,38 +873,441 @@ const App = {
   },
 
   // =========================================================================
-  // DUAL MODE PIMPINAN (KETUA & WAKIL): PERSETUJUAN (ACC) & IZIN SAYA (IZIN)
+  // TAB NAVIGASI DASHBOARD PEGAWAI & PIMPINAN
   // =========================================================================
 
-  // Beralih Tab di Panel Pimpinan: Persetujuan (ACC) vs Izin Keluar Saya (IZIN)
-  switchKetuaTab(tab = 'acc') {
-    this.state.ketuaTab = tab;
-    const btnAcc = document.getElementById('btnKetuaTabAcc');
-    const btnIzin = document.getElementById('btnKetuaTabIzin');
-    const secAcc = document.getElementById('ketuaSectionApproval');
-    const secIzin = document.getElementById('ketuaSectionIzin');
+  // Beralih Tab di Panel Pegawai: Izin Keluar Saya vs Keberadaan Pegawai
+  switchPegawaiTab(tab = 'izin') {
+    this.state.pegawaiTab = tab;
+    const btnIzin = document.getElementById('btnPegawaiTabIzin');
+    const btnMon = document.getElementById('btnPegawaiTabMonitoring');
+    const secIzin = document.getElementById('pegawaiSectionIzin');
+    const secMon = document.getElementById('pegawaiSectionMonitoring');
 
-    if (tab === 'acc') {
-      if (btnAcc) {
-        btnAcc.className = 'flex-1 py-2 px-3 rounded-xl transition text-center flex items-center justify-center gap-1.5 bg-amber-700 text-white shadow-xs font-bold';
+    if (tab === 'izin') {
+      if (btnIzin) {
+        btnIzin.className = 'flex-1 py-2 px-3 rounded-xl transition text-center flex items-center justify-center gap-1.5 bg-court-700 text-white shadow-xs font-bold';
+      }
+      if (btnMon) {
+        btnMon.className = 'flex-1 py-2 px-3 rounded-xl transition text-center flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900 font-semibold';
+      }
+      if (secIzin) secIzin.classList.remove('hidden');
+      if (secMon) secMon.classList.add('hidden');
+    } else {
+      if (btnMon) {
+        btnMon.className = 'flex-1 py-2 px-3 rounded-xl transition text-center flex items-center justify-center gap-1.5 bg-court-700 text-white shadow-xs font-bold';
       }
       if (btnIzin) {
         btnIzin.className = 'flex-1 py-2 px-3 rounded-xl transition text-center flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900 font-semibold';
       }
-      if (secAcc) secAcc.classList.remove('hidden');
       if (secIzin) secIzin.classList.add('hidden');
-    } else {
-      if (btnIzin) {
-        btnIzin.className = 'flex-1 py-2 px-3 rounded-xl transition text-center flex items-center justify-center gap-1.5 bg-amber-700 text-white shadow-xs font-bold';
-      }
-      if (btnAcc) {
-        btnAcc.className = 'flex-1 py-2 px-3 rounded-xl transition text-center flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900 font-semibold';
-      }
-      if (secAcc) secAcc.classList.add('hidden');
-      if (secIzin) secIzin.classList.remove('hidden');
-      this.loadKetuaMyIzinList();
+      if (secMon) secMon.classList.remove('hidden');
+      this.loadPresenceData();
     }
     lucide.createIcons();
+  },
+
+  // Beralih Tab di Panel Pimpinan: Persetujuan (ACC) vs Izin Saya vs Keberadaan Pegawai
+  switchKetuaTab(tab = 'acc') {
+    this.state.ketuaTab = tab;
+    const btnAcc = document.getElementById('btnKetuaTabAcc');
+    const btnIzin = document.getElementById('btnKetuaTabIzin');
+    const btnMon = document.getElementById('btnKetuaTabMonitoring');
+    const secAcc = document.getElementById('ketuaSectionApproval');
+    const secIzin = document.getElementById('ketuaSectionIzin');
+    const secMon = document.getElementById('ketuaSectionMonitoring');
+
+    const activeCls = 'flex-1 py-2 px-2 rounded-xl transition text-center flex items-center justify-center gap-1 bg-amber-700 text-white shadow-xs font-bold text-[11px]';
+    const inactiveCls = 'flex-1 py-2 px-2 rounded-xl transition text-center flex items-center justify-center gap-1 text-slate-600 hover:text-slate-900 font-semibold text-[11px]';
+
+    if (btnAcc) btnAcc.className = tab === 'acc' ? activeCls : inactiveCls;
+    if (btnIzin) btnIzin.className = tab === 'izin' ? activeCls : inactiveCls;
+    if (btnMon) btnMon.className = tab === 'monitoring' ? activeCls : inactiveCls;
+
+    if (secAcc) secAcc.classList.toggle('hidden', tab !== 'acc');
+    if (secIzin) secIzin.classList.toggle('hidden', tab !== 'izin');
+    if (secMon) secMon.classList.toggle('hidden', tab !== 'monitoring');
+
+    if (tab === 'izin') {
+      this.loadKetuaMyIzinList();
+    } else if (tab === 'monitoring') {
+      this.loadPresenceData();
+    }
+    lucide.createIcons();
+  },
+
+  // =========================================================================
+  // MONITORING KEBERADAAN PEGAWAI (DI KANTOR vs SEDANG IZIN KELUAR)
+  // =========================================================================
+
+  // Load Data Live Keberadaan Pegawai dari Server
+  async loadPresenceData() {
+    try {
+      const res = await fetch('/api/presence');
+      const json = await res.json();
+      if (json.success && json.data) {
+        this.state.presenceData = json.data;
+
+        // Update Counter Pegawai
+        const countPegDiKantor = document.getElementById('countPegawaiDiKantor');
+        const countPegSedangIzin = document.getElementById('countPegawaiSedangIzin');
+        const badgePegSedangIzin = document.getElementById('badgePegawaiSedangIzin');
+        if (countPegDiKantor) countPegDiKantor.textContent = json.data.diKantor;
+        if (countPegSedangIzin) countPegSedangIzin.textContent = json.data.sedangIzin;
+        if (badgePegSedangIzin) {
+          if (json.data.sedangIzin > 0) {
+            badgePegSedangIzin.textContent = `${json.data.sedangIzin} Izin`;
+            badgePegSedangIzin.classList.remove('hidden');
+          } else {
+            badgePegSedangIzin.classList.add('hidden');
+          }
+        }
+
+        // Update Counter Ketua
+        const countKetDiKantor = document.getElementById('countKetuaDiKantor');
+        const countKetSedangIzin = document.getElementById('countKetuaSedangIzin');
+        const badgeKetSedangIzin = document.getElementById('badgeKetuaSedangIzin');
+        if (countKetDiKantor) countKetDiKantor.textContent = json.data.diKantor;
+        if (countKetSedangIzin) countKetSedangIzin.textContent = json.data.sedangIzin;
+        if (badgeKetSedangIzin) {
+          if (json.data.sedangIzin > 0) {
+            badgeKetSedangIzin.textContent = `${json.data.sedangIzin} Izin`;
+            badgeKetSedangIzin.classList.remove('hidden');
+          } else {
+            badgeKetSedangIzin.classList.add('hidden');
+          }
+        }
+
+        // Render card lists
+        this.renderMonitoringPegawai();
+      }
+    } catch (e) {
+      console.warn('Gagal memuat status keberadaan pegawai:', e);
+    }
+  },
+
+  // Event Input Pencarian Pegawai
+  onSearchMonitoring(val) {
+    this.state.monitoringSearch = (val || '').trim().toLowerCase();
+    
+    // Sinkronkan nilai di kedua input pencarian jika ada
+    const searchPeg = document.getElementById('searchMonitoringPegawai');
+    const searchKet = document.getElementById('searchMonitoringKetua');
+    if (searchPeg && searchPeg.value !== val) searchPeg.value = val;
+    if (searchKet && searchKet.value !== val) searchKet.value = val;
+
+    this.renderMonitoringPegawai();
+  },
+
+  // Set Filter Keberadaan (all / sedang_izin / di_kantor)
+  setMonitoringFilter(filter) {
+    this.state.monitoringFilter = filter;
+
+    // Perbarui style tombol filter
+    document.querySelectorAll('.mon-filter-btn').forEach(btn => {
+      const f = btn.getAttribute('data-mon-filter');
+      const isKetua = btn.closest('#ketuaSectionMonitoring') !== null;
+      const activeColor = isKetua ? 'bg-amber-700 text-white font-bold' : 'bg-court-800 text-white font-bold';
+
+      if (f === filter) {
+        btn.className = `mon-filter-btn px-3 py-1 rounded-full text-[11px] ${activeColor}`;
+      } else {
+        btn.className = 'mon-filter-btn px-3 py-1 rounded-full text-[11px] font-semibold bg-white text-slate-600 border border-slate-200';
+      }
+    });
+
+    this.renderMonitoringPegawai();
+  },
+
+  // Render Daftar Kartu Pegawai di Dashboard Pegawai dan Pimpinan
+  renderMonitoringPegawai() {
+    if (!this.state.presenceData || !Array.isArray(this.state.presenceData.list)) return;
+
+    const list = this.state.presenceData.list;
+    const filter = this.state.monitoringFilter || 'all';
+    const search = this.state.monitoringSearch || '';
+
+    const filtered = list.filter(p => {
+      if (filter === 'sedang_izin' && p.statusKeberadaan !== 'sedang_izin') return false;
+      if (filter === 'di_kantor' && p.statusKeberadaan !== 'di_kantor') return false;
+
+      if (search) {
+        const matchNama = (p.nama || '').toLowerCase().includes(search);
+        const matchJabatan = (p.jabatan || '').toLowerCase().includes(search);
+        const matchNip = (p.nip || '').toLowerCase().includes(search);
+        const matchKategori = (p.kategoriNama || '').toLowerCase().includes(search);
+        if (!matchNama && !matchJabatan && !matchNip && !matchKategori) return false;
+      }
+      return true;
+    });
+
+    const getInitials = (name) => {
+      if (!name) return 'PG';
+      const parts = name.trim().split(/\s+/);
+      if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    };
+
+    const buildCardHtml = (p) => {
+      const isSedangIzin = p.statusKeberadaan === 'sedang_izin';
+      const isKetuaRole = p.role === 'ketua_jabatan';
+
+      if (isSedangIzin) {
+        const jamKeluar = p.detailIzin ? (p.detailIzin.jamKeluar || '-') : '-';
+        const jamMasuk = p.detailIzin ? (p.detailIzin.jamMasuk || '-') : '-';
+
+        return `
+          <div onclick="App.openDetailKeberadaanModal('${p.id}')"
+            class="bg-white hover:bg-amber-50/60 border-2 border-amber-300 rounded-2xl p-3.5 transition cursor-pointer shadow-xs hover:shadow-md space-y-2.5 group">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-900 font-extrabold text-xs flex items-center justify-center shrink-0 border border-amber-300">
+                  ${getInitials(p.nama)}
+                </div>
+                <div class="min-w-0">
+                  <h4 class="text-xs font-black text-slate-900 group-hover:text-amber-950 truncate flex items-center gap-1.5">
+                    <span>${escapeHtml(p.nama)}</span>
+                    ${isKetuaRole ? '<span class="text-[9px] bg-amber-100 text-amber-900 px-1.5 py-0.2 rounded font-bold border border-amber-300">Pejabat</span>' : ''}
+                  </h4>
+                  <p class="text-[11px] text-slate-600 truncate mt-0.5">${escapeHtml(p.jabatan)}</p>
+                </div>
+              </div>
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-amber-500 text-white shadow-xs shrink-0 flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span> Sedang Izin
+              </span>
+            </div>
+
+            <div class="bg-amber-50 border border-amber-200/90 rounded-xl p-2.5 flex items-center justify-between text-[11px]">
+              <div class="flex items-center gap-1.5 text-amber-950 font-bold">
+                <i data-lucide="clock" class="w-3.5 h-3.5 text-amber-600"></i>
+                <span>Pukul ${jamKeluar} s/d ${jamMasuk} WIB</span>
+              </div>
+              <div class="text-[10px] text-amber-800 font-bold flex items-center gap-1 group-hover:translate-x-0.5 transition">
+                <span>Rincian</span>
+                <i data-lucide="chevron-right" class="w-3 h-3"></i>
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        const hasCompleted = p.detailIzin && p.detailIzin.status === 'completed';
+        const infoSub = hasCompleted
+          ? `<span class="text-[10px] text-emerald-700 font-semibold flex items-center gap-1"><i data-lucide="check" class="w-3 h-3"></i> Kembali pkl ${p.detailIzin.jamKembaliAktual || p.detailIzin.jamMasuk}</span>`
+          : `<span class="text-[10px] text-slate-400">Stanby di kantor</span>`;
+
+        return `
+          <div onclick="App.openDetailKeberadaanModal('${p.id}')"
+            class="bg-white hover:bg-slate-50 border border-slate-200 rounded-2xl p-3.5 transition cursor-pointer shadow-2xs hover:shadow-xs space-y-2 group">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-900 font-extrabold text-xs flex items-center justify-center shrink-0 border border-emerald-300">
+                  ${getInitials(p.nama)}
+                </div>
+                <div class="min-w-0">
+                  <h4 class="text-xs font-black text-slate-900 group-hover:text-emerald-950 truncate flex items-center gap-1.5">
+                    <span>${escapeHtml(p.nama)}</span>
+                    ${isKetuaRole ? '<span class="text-[9px] bg-amber-100 text-amber-900 px-1.5 py-0.2 rounded font-bold border border-amber-300">Pejabat</span>' : ''}
+                  </h4>
+                  <p class="text-[11px] text-slate-600 truncate mt-0.5">${escapeHtml(p.jabatan)}</p>
+                </div>
+              </div>
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 shrink-0 flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> Di Kantor
+              </span>
+            </div>
+
+            <div class="flex items-center justify-between text-[11px] text-slate-500 pt-0.5 border-t border-slate-100">
+              <span class="text-[10px] font-mono">NIP: ${p.nip || '-'}</span>
+              ${infoSub}
+            </div>
+          </div>
+        `;
+      }
+    };
+
+    const cardsHtml = filtered.map(p => buildCardHtml(p)).join('');
+
+    // Render ke Container Pegawai
+    const listPegEl = document.getElementById('listMonitoringPegawai');
+    const emptyPegEl = document.getElementById('emptyMonitoringPegawai');
+    if (listPegEl) {
+      listPegEl.innerHTML = cardsHtml;
+      if (emptyPegEl) emptyPegEl.classList.toggle('hidden', filtered.length > 0);
+    }
+
+    // Render ke Container Ketua
+    const listKetEl = document.getElementById('listMonitoringKetua');
+    const emptyKetEl = document.getElementById('emptyMonitoringKetua');
+    if (listKetEl) {
+      listKetEl.innerHTML = cardsHtml;
+      if (emptyKetEl) emptyKetEl.classList.toggle('hidden', filtered.length > 0);
+    }
+
+    lucide.createIcons();
+  },
+
+  // Buka Modal Pop-up Detail Keberadaan & Rincian Izin Pegawai
+  openDetailKeberadaanModal(personId) {
+    if (!this.state.presenceData || !Array.isArray(this.state.presenceData.list)) return;
+    const person = this.state.presenceData.list.find(p => String(p.id) === String(personId));
+    if (!person) return;
+
+    const modal = document.getElementById('modalDetailKeberadaan');
+    const elNama = document.getElementById('detKeberadaanNama');
+    const elJabatan = document.getElementById('detKeberadaanJabatan');
+    const elNip = document.getElementById('detKeberadaanNip');
+    const elBadge = document.getElementById('detKeberadaanBadge');
+    const elContent = document.getElementById('detKeberadaanContent');
+
+    if (elNama) elNama.textContent = person.nama;
+    if (elJabatan) elJabatan.textContent = person.jabatan || 'Pegawai';
+    if (elNip) elNip.textContent = person.nip ? `NIP: ${person.nip}` : 'NIP: -';
+
+    const isSedangIzin = person.statusKeberadaan === 'sedang_izin';
+    const detail = person.detailIzin;
+
+    if (isSedangIzin && detail) {
+      if (elBadge) {
+        elBadge.innerHTML = `
+          <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 inline-flex items-center gap-1.5 shadow-2xs">
+            <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> Sedang Izin Keluar
+          </span>
+        `;
+      }
+
+      elContent.innerHTML = `
+        <!-- Box Waktu Izin -->
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-3.5 space-y-2">
+          <p class="text-[10px] font-bold uppercase tracking-wider text-amber-800">Waktu & Jam Izin Keluar Kantor</p>
+          <div class="grid grid-cols-2 gap-2 text-center">
+            <div class="bg-white rounded-lg p-2 border border-amber-200">
+              <span class="text-[10px] text-slate-500 font-semibold block">Jam Keluar</span>
+              <span class="text-sm font-black text-amber-950">${detail.jamKeluar || '-'} WIB</span>
+            </div>
+            <div class="bg-white rounded-lg p-2 border border-amber-200">
+              <span class="text-[10px] text-slate-500 font-semibold block">Perkiraan Kembali</span>
+              <span class="text-sm font-black text-amber-950">${detail.jamMasuk || '-'} WIB</span>
+            </div>
+          </div>
+          <p class="text-[10px] text-amber-900 text-center font-medium pt-1">
+            📅 Tanggal: <span class="font-bold">${formatDateIndo(detail.tanggalIzin, true)}</span>
+          </p>
+        </div>
+
+        <!-- Box Keperluan -->
+        <div class="bg-white border border-slate-200 rounded-xl p-3.5 space-y-1">
+          <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Alasan / Keperluan Keluar Kantor</p>
+          <p class="text-xs font-bold text-slate-900 leading-relaxed">${escapeHtml(detail.keterangan || '-')}</p>
+        </div>
+
+        <!-- Box Pengesahan & TTD Pejabat -->
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2">
+          <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Persetujuan Atasan (ACC)</p>
+          <div class="flex items-center justify-between text-xs">
+            <div>
+              <p class="font-bold text-slate-900">${escapeHtml(detail.atasanNama || '-')}</p>
+              <p class="text-[10px] text-slate-600">${escapeHtml(detail.atasanJabatan || '-')}</p>
+              ${detail.approvedAt ? `<p class="text-[9px] text-slate-400 mt-0.5">Disetujui: ${formatDateTimeIndo(detail.approvedAt)}</p>` : ''}
+            </div>
+            <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300">
+              Disetujui
+            </span>
+          </div>
+
+          ${detail.catatanAtasan ? `
+            <div class="bg-white p-2 rounded-lg border border-slate-200 text-[10px] text-slate-700">
+              <span class="font-bold text-slate-900">Catatan Atasan:</span> "${escapeHtml(detail.catatanAtasan)}"
+            </div>
+          ` : ''}
+
+          ${detail.ttdAtasan ? `
+            <div class="pt-2 border-t border-slate-200/80 flex flex-col items-center">
+              <p class="text-[9px] text-slate-400 font-semibold mb-1">Tanda Tangan Digital Pimpinan:</p>
+              <img src="${detail.ttdAtasan}" alt="TTD Atasan" class="max-h-16 max-w-[140px] object-contain bg-white border border-slate-200 rounded-md p-1 shadow-2xs">
+            </div>
+          ` : ''}
+        </div>
+
+        ${detail.id ? `
+          <button type="button" onclick="App.closeDetailKeberadaanModal(); App.openTiketModal('${detail.id}');"
+            class="w-full py-2.5 rounded-xl text-xs font-bold bg-court-700 hover:bg-court-800 text-white flex items-center justify-center gap-1.5 transition shadow-xs">
+            <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+            <span>Lihat Lembar Surat Izin Resmi</span>
+          </button>
+        ` : ''}
+      `;
+    } else {
+      if (elBadge) {
+        elBadge.innerHTML = `
+          <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 inline-flex items-center gap-1.5 shadow-2xs">
+            <span class="w-2 h-2 rounded-full bg-emerald-600"></span> Di Kantor
+          </span>
+        `;
+      }
+
+      if (detail && detail.status === 'completed') {
+        elContent.innerHTML = `
+          <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 space-y-2">
+            <div class="flex items-center gap-2 text-emerald-900">
+              <div class="w-7 h-7 rounded-lg bg-emerald-500 text-white flex items-center justify-center shrink-0">
+                <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <p class="text-xs font-bold">Pegawai Telah Kembali di Kantor</p>
+                <p class="text-[10px] text-emerald-700">Telah check-in kembali pukul ${detail.jamKembaliAktual || detail.jamMasuk} WIB</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white border border-slate-200 rounded-xl p-3.5 space-y-2 text-[11px]">
+            <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Riwayat Izin Hari Ini</p>
+            <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+              <span class="text-slate-600 font-medium">Jam Keluar - Rencana Masuk</span>
+              <span class="font-bold text-slate-900">${detail.jamKeluar || '-'} - ${detail.jamMasuk || '-'} WIB</span>
+            </div>
+            <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+              <span class="text-slate-600 font-medium">Jam Kembali Aktual</span>
+              <span class="font-bold text-emerald-700">${detail.jamKembaliAktual || detail.jamMasuk || '-'} WIB</span>
+            </div>
+            ${detail.keterangan ? `
+              <div class="pt-1">
+                <span class="text-[10px] text-slate-500">Keperluan:</span>
+                <p class="font-semibold text-slate-800">${escapeHtml(detail.keterangan)}</p>
+              </div>
+            ` : ''}
+          </div>
+
+          ${detail.id ? `
+            <button type="button" onclick="App.closeDetailKeberadaanModal(); App.openTiketModal('${detail.id}');"
+              class="w-full py-2.5 rounded-xl text-xs font-bold bg-court-700 hover:bg-court-800 text-white flex items-center justify-center gap-1.5 transition shadow-xs">
+              <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+              <span>Lihat Lembar Surat Izin</span>
+            </button>
+          ` : ''}
+        `;
+      } else {
+        elContent.innerHTML = `
+          <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center space-y-2">
+            <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">
+              <i data-lucide="building" class="w-5 h-5"></i>
+            </div>
+            <p class="text-xs font-bold text-emerald-950">Pegawai Berada di Kantor</p>
+            <p class="text-[11px] text-emerald-800">
+              Pegawai saat ini bertugas aktif di kantor dan tidak memiliki permohonan izin keluar yang sedang berjalan hari ini.
+            </p>
+          </div>
+        `;
+      }
+    }
+
+    if (modal) modal.classList.remove('modal-hidden');
+    lucide.createIcons();
+  },
+
+  // Tutup Modal Pop-up Detail Keberadaan
+  closeDetailKeberadaanModal() {
+    const modal = document.getElementById('modalDetailKeberadaan');
+    if (modal) modal.classList.add('modal-hidden');
   },
 
   // Load Izin Keluar Milik Pimpinan Sendiri (Ketua / Wakil)
@@ -1774,6 +2207,16 @@ const App = {
     if (!user) return;
 
     try {
+      // 0. Update Live Keberadaan Pegawai Hari Ini (Di Kantor vs Sedang Izin)
+      if (user.role === 'ketua_jabatan' || user.role === 'pegawai') {
+        await this.loadPresenceData();
+      }
+
+      // Update daftar izin pegawai sendiri jika peran pegawai
+      if (user.role === 'pegawai' && !isInitial) {
+        await this.loadPegawaiIzinList();
+      }
+
       // 1. KETUA JABATAN & WAKIL KETUA: Cek Permohonan Izin Baru Pegawai
       if (user.role === 'ketua_jabatan') {
         const res = await fetch('/api/izin?status=pending');

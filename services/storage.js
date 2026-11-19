@@ -10,6 +10,17 @@ if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
+// Helper Tanggal WIB (UTC+7)
+function getTodayWIB() {
+  const d = new Date();
+  const utc = d.getTime() + (d.getTimezoneOffset() * 60000);
+  const wib = new Date(utc + (3600000 * 7));
+  const year = wib.getFullYear();
+  const month = String(wib.getMonth() + 1).padStart(2, '0');
+  const day = String(wib.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 // Master Kategori & Jenis Jabatan Resmi Pengadilan Agama Gunung Sugih
 const DEFAULT_KATEGORI_JABATAN = [
   {
@@ -852,6 +863,96 @@ const storage = {
     list.splice(index, 1);
     writeJSON(IZIN_FILE, list);
     return { success: true, message: 'Data izin berhasil dihapus.' };
+  },
+
+  // Monitoring Keberadaan Pegawai Hari Ini (Di Kantor vs Sedang Izin)
+  getMonitoringPegawai() {
+    const today = getTodayWIB();
+    const userList = readJSON(PEGAWAI_FILE, DEFAULT_USERS)
+      .filter(u => (u.statusAkun === 'active' || !u.statusAkun) && (u.nama || '').toLowerCase() !== 'root');
+    const izinList = readJSON(IZIN_FILE, getDefaultIzin())
+      .filter(i => i.tanggalIzin === today);
+
+    let countDiKantor = 0;
+    let countSedangIzin = 0;
+
+    const list = userList.map(u => {
+      const userIzins = izinList.filter(i => i.pegawaiId === u.id);
+      const activeIzin = userIzins.find(i => i.status === 'approved');
+      const pendingIzin = userIzins.find(i => i.status === 'pending');
+      const completedIzin = userIzins.find(i => i.status === 'completed');
+
+      let statusKeberadaan = 'di_kantor';
+      let detailIzin = null;
+
+      if (activeIzin) {
+        statusKeberadaan = 'sedang_izin';
+        countSedangIzin++;
+        detailIzin = {
+          id: activeIzin.id,
+          kodeSurat: activeIzin.kodeSurat,
+          tanggalIzin: activeIzin.tanggalIzin,
+          jamKeluar: activeIzin.jamKeluar,
+          jamMasuk: activeIzin.jamMasuk,
+          keterangan: activeIzin.keterangan,
+          atasanNama: activeIzin.atasanNama,
+          atasanJabatan: activeIzin.atasanJabatan,
+          approvedAt: activeIzin.approvedAt,
+          catatanAtasan: activeIzin.catatanAtasan,
+          ttdAtasan: activeIzin.ttdAtasan,
+          status: activeIzin.status
+        };
+      } else {
+        countDiKantor++;
+        if (completedIzin) {
+          detailIzin = {
+            id: completedIzin.id,
+            kodeSurat: completedIzin.kodeSurat,
+            tanggalIzin: completedIzin.tanggalIzin,
+            jamKeluar: completedIzin.jamKeluar,
+            jamMasuk: completedIzin.jamMasuk,
+            jamKembaliAktual: completedIzin.jamKembaliAktual,
+            keterangan: completedIzin.keterangan,
+            status: completedIzin.status
+          };
+        } else if (pendingIzin) {
+          detailIzin = {
+            id: pendingIzin.id,
+            tanggalIzin: pendingIzin.tanggalIzin,
+            jamKeluar: pendingIzin.jamKeluar,
+            jamMasuk: pendingIzin.jamMasuk,
+            keterangan: pendingIzin.keterangan,
+            status: pendingIzin.status
+          };
+        }
+      }
+
+      return {
+        id: u.id,
+        nama: u.nama,
+        nip: u.nip,
+        jabatan: u.jabatan || 'Pegawai',
+        kategoriId: u.kategoriId || null,
+        kategoriNama: u.kategoriNama || null,
+        role: u.role,
+        statusKeberadaan,
+        detailIzin
+      };
+    });
+
+    list.sort((a, b) => {
+      if (a.statusKeberadaan === 'sedang_izin' && b.statusKeberadaan !== 'sedang_izin') return -1;
+      if (a.statusKeberadaan !== 'sedang_izin' && b.statusKeberadaan === 'sedang_izin') return 1;
+      return (a.nama || '').localeCompare(b.nama || '');
+    });
+
+    return {
+      tanggal: today,
+      total: userList.length,
+      diKantor: countDiKantor,
+      sedangIzin: countSedangIzin,
+      list
+    };
   },
 
   // Statistik ringkasan komprehensif
