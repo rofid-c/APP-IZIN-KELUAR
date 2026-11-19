@@ -21,6 +21,16 @@ function getTodayWIB() {
   return `${year}-${month}-${day}`;
 }
 
+// Helper Jam Menit WIB Sekarang (HH:mm)
+function getNowTimeWIB() {
+  const d = new Date();
+  const utc = d.getTime() + (d.getTimezoneOffset() * 60000);
+  const wib = new Date(utc + (3600000 * 7));
+  const hh = String(wib.getHours()).padStart(2, '0');
+  const mm = String(wib.getMinutes()).padStart(2, '0');
+  return `${hh}:${mm}`;
+}
+
 // Master Kategori & Jenis Jabatan Resmi Pengadilan Agama Gunung Sugih
 const DEFAULT_KATEGORI_JABATAN = [
   {
@@ -868,6 +878,7 @@ const storage = {
   // Monitoring Keberadaan Pegawai Hari Ini (Di Kantor vs Sedang Izin)
   getMonitoringPegawai() {
     const today = getTodayWIB();
+    const nowWIB = getNowTimeWIB();
     const userList = readJSON(PEGAWAI_FILE, DEFAULT_USERS)
       .filter(u => (u.statusAkun === 'active' || !u.statusAkun) && (u.nama || '').toLowerCase() !== 'root');
     const izinList = readJSON(IZIN_FILE, getDefaultIzin())
@@ -900,11 +911,15 @@ const storage = {
           approvedAt: activeIzin.approvedAt,
           catatanAtasan: activeIzin.catatanAtasan,
           ttdAtasan: activeIzin.ttdAtasan,
-          status: activeIzin.status
+          status: activeIzin.status,
+          isDurasiHabis: false
         };
       } else {
         countDiKantor++;
         if (completedIzin) {
+          // Durasi surat izin habis jika waktu saat ini sudah mencapai/melewati batas jamMasuk
+          const isDurasiHabis = completedIzin.jamMasuk ? (nowWIB >= completedIzin.jamMasuk) : true;
+
           detailIzin = {
             id: completedIzin.id,
             kodeSurat: completedIzin.kodeSurat,
@@ -913,7 +928,8 @@ const storage = {
             jamMasuk: completedIzin.jamMasuk,
             jamKembaliAktual: completedIzin.jamKembaliAktual,
             keterangan: completedIzin.keterangan,
-            status: completedIzin.status
+            status: completedIzin.status,
+            isDurasiHabis
           };
         } else if (pendingIzin) {
           detailIzin = {
@@ -922,7 +938,8 @@ const storage = {
             jamKeluar: pendingIzin.jamKeluar,
             jamMasuk: pendingIzin.jamMasuk,
             keterangan: pendingIzin.keterangan,
-            status: pendingIzin.status
+            status: pendingIzin.status,
+            isDurasiHabis: false
           };
         }
       }

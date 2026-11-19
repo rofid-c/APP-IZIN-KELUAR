@@ -41,6 +41,15 @@ function formatDateIndo(dateStr, includeDay = false) {
   return includeDay ? `${dayName}, ${dayNum} ${monthName} ${year}` : `${dayNum} ${monthName} ${year}`;
 }
 
+// Cek apakah durasi surat izin telah habis (waktu sekarang sudah melewati jamMasuk)
+function isDurasiIzinHabis(jamMasuk, isDurasiHabisServer) {
+  if (isDurasiHabisServer === true) return true;
+  if (!jamMasuk) return false;
+  const now = new Date();
+  const currentHHMM = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  return currentHHMM >= jamMasuk;
+}
+
 const App = {
   state: {
     currentUser: null,
@@ -1090,8 +1099,12 @@ const App = {
           </div>
         `;
       } else {
-        const hasCompleted = p.detailIzin && p.detailIzin.status === 'completed';
-        const infoSub = hasCompleted
+        // Cek apakah baru kembali dan durasi surat izin belum habis
+        const isBelumHabisDurasi = p.detailIzin && 
+          p.detailIzin.status === 'completed' && 
+          !isDurasiIzinHabis(p.detailIzin.jamMasuk, p.detailIzin.isDurasiHabis);
+
+        const infoSub = isBelumHabisDurasi
           ? `<span class="text-[10px] text-emerald-700 font-semibold flex items-center gap-1"><i data-lucide="check" class="w-3 h-3"></i> Kembali pkl ${p.detailIzin.jamKembaliAktual || p.detailIzin.jamMasuk}</span>`
           : `<span class="text-[10px] text-slate-400">Stanby di kantor</span>`;
 
@@ -1245,7 +1258,11 @@ const App = {
         `;
       }
 
-      if (detail && detail.status === 'completed') {
+      const isBelumHabisDurasi = detail && 
+        detail.status === 'completed' && 
+        !isDurasiIzinHabis(detail.jamMasuk, detail.isDurasiHabis);
+
+      if (isBelumHabisDurasi) {
         elContent.innerHTML = `
           <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 space-y-2">
             <div class="flex items-center gap-2 text-emerald-900">
@@ -1260,9 +1277,9 @@ const App = {
           </div>
 
           <div class="bg-white border border-slate-200 rounded-xl p-3.5 space-y-2 text-[11px]">
-            <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Riwayat Izin Hari Ini</p>
+            <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Durasi Izin Keluar</p>
             <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-              <span class="text-slate-600 font-medium">Jam Keluar - Rencana Masuk</span>
+              <span class="text-slate-600 font-medium">Batas Izin Keluar</span>
               <span class="font-bold text-slate-900">${detail.jamKeluar || '-'} - ${detail.jamMasuk || '-'} WIB</span>
             </div>
             <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200">
@@ -1293,7 +1310,7 @@ const App = {
             </div>
             <p class="text-xs font-bold text-emerald-950">Pegawai Berada di Kantor</p>
             <p class="text-[11px] text-emerald-800">
-              Pegawai saat ini bertugas aktif di kantor dan tidak memiliki permohonan izin keluar yang sedang berjalan hari ini.
+              Pegawai saat ini bertugas aktif di kantor dan tidak memiliki permohonan izin keluar yang sedang berjalan saat ini.
             </p>
           </div>
         `;
