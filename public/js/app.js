@@ -231,8 +231,24 @@ const App = {
       return;
     }
 
-    selKategori.innerHTML = '<option value="">-- Pilih Kategori Jabatan --</option>' +
-      list.map(k => `<option value="${k.id}">${k.nama}</option>`).join('');
+    const pejabatList = list.filter(k => k.peran === 'ketua_jabatan');
+    const pegawaiList = list.filter(k => k.peran !== 'ketua_jabatan');
+
+    let html = '<option value="">-- Pilih Kategori Jabatan --</option>';
+
+    if (pejabatList.length > 0) {
+      html += `<optgroup label="⚖️ Pejabat Struktural & Pimpinan">` +
+        pejabatList.map(k => `<option value="${k.id}">⚖️ ${k.nama}</option>`).join('') +
+        `</optgroup>`;
+    }
+
+    if (pegawaiList.length > 0) {
+      html += `<optgroup label="👤 Fungsional & Pelaksana Pegawai">` +
+        pegawaiList.map(k => `<option value="${k.id}">👤 ${k.nama}</option>`).join('') +
+        `</optgroup>`;
+    }
+
+    selKategori.innerHTML = html;
 
     // Default ke kategori pegawai jika ada
     const defaultKat = list.find(k => k.id === 'kat-pegawai') || list[0];
@@ -322,7 +338,7 @@ const App = {
       this.showToast('Gagal terhubung ke server.', 'error');
     } finally {
       btn.disabled = false;
-      btn.innerHTML = `<i data-lucide="user-plus" class="w-4 h-4"></i> Daftar Akun Pegawai`;
+      btn.innerHTML = `<i data-lucide="user-plus" class="w-4 h-4"></i> Daftar Akun Baru`;
       lucide.createIcons();
     }
   },
@@ -726,7 +742,10 @@ const App = {
   },
 
   openApprovalModal(izinId) {
-    const izin = (this.state.ketuaIzinList && this.state.ketuaIzinList.find(i => i.id === izinId));
+    let izin = (this.state.ketuaIzinList && this.state.ketuaIzinList.find(i => i.id === izinId));
+    if (!izin && this.state.selectedIzin && this.state.selectedIzin.id === izinId) {
+      izin = this.state.selectedIzin;
+    }
     if (!izin) {
       this.showToast('Data permohonan izin tidak ditemukan.', 'error');
       return;
@@ -745,15 +764,24 @@ const App = {
     if (keperluanEl) keperluanEl.textContent = `Keperluan: "${izin.keterangan}"`;
 
     const catatanEl = document.getElementById('approvalCatatanAtasan');
-    if (catatanEl) catatanEl.value = 'Disetujui oleh Ketua Pengadilan Agama Gunung Sugih.';
+    const u = this.state.currentUser;
+    const defaultCatatan = u ? `Disetujui oleh ${u.jabatan || 'Ketua Jabatan'}.` : 'Disetujui oleh Ketua Pengadilan Agama Gunung Sugih.';
+    if (catatanEl) catatanEl.value = defaultCatatan;
 
     const modal = document.getElementById('modalApprovalKetua');
     if (modal) modal.classList.remove('modal-hidden');
 
-    this.clearKetuaSignature();
+    this.initKetuaSignaturePad();
+    this.setupSignatureCanvas(true);
+
+    requestAnimationFrame(() => {
+      this.setupSignatureCanvas(true);
+    });
     setTimeout(() => {
-      this.initKetuaSignaturePad();
-    }, 150);
+      if (!this.state.hasKetuaSigned) {
+        this.setupSignatureCanvas(true);
+      }
+    }, 100);
 
     lucide.createIcons();
   },
@@ -1010,62 +1038,127 @@ const App = {
   // SIGNATURE PAD & MODAL FORM PENGAJUAN
   // ==========================================
 
+  setupSignatureCanvas(isKetua = false) {
+    const canvasId = isKetua ? 'sigCanvasKetua' : 'sigCanvas';
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (isKetua) {
+      this.canvasKetua = canvas;
+      this.ctxKetua = ctx;
+    } else {
+      this.canvas = canvas;
+      this.ctx = ctx;
+    }
+
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const parentWidth = canvas.parentElement ? canvas.parentElement.clientWidth : 320;
+    const w = Math.round(rect.width || canvas.clientWidth || parentWidth || 320);
+    const h = Math.round(rect.height || canvas.clientHeight || 112);
+
+    if (w > 0 && h > 0) {
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      ctx.scale(dpr, dpr);
+      ctx.strokeStyle = isKetua ? '#92400e' : '#064e3b';
+      ctx.lineWidth = 2.5;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+    }
+
+    if (isKetua) {
+      this.state.hasKetuaSigned = false;
+    } else {
+      this.state.hasSigned = false;
+    }
+  },
 
   initSignaturePad() {
     this.canvas = document.getElementById('sigCanvas');
     if (!this.canvas) return;
 
-    this.ctx = this.canvas.getContext('2d');
+    if (this._sigEventsBound) {
+      this.setupSignatureCanvas(false);
+      return;
+    }
 
-    const resizeCanvas = () => {
-      if (!this.canvas) return;
-      const rect = this.canvas.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
-      this.canvas.width = rect.width * dpr;
-      this.canvas.height = rect.height * dpr;
-      this.ctx.scale(dpr, dpr);
-      this.ctx.strokeStyle = '#064e3b';
-      this.ctx.lineWidth = 2.5;
-      this.ctx.lineCap = 'round';
-      this.ctx.lineJoin = 'round';
-    };
-
-    window.addEventListener('resize', resizeCanvas);
-    setTimeout(resizeCanvas, 200);
-
+    const canvas = this.canvas;
     const getPos = (e) => {
-      const rect = this.canvas.getBoundingClientRect();
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+      const clientY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
       return {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top
+        x: clientX - rect.left,
+        y: clientY - rect.top
       };
     };
 
-    this.canvas.addEventListener('pointerdown', (e) => {
+    const startDraw = (e) => {
+      if (e.type === 'touchstart') e.preventDefault();
       this.isDrawing = true;
       this.state.hasSigned = true;
-      this.canvas.setPointerCapture(e.pointerId);
+      try {
+        if (e.pointerId && canvas.setPointerCapture) {
+          canvas.setPointerCapture(e.pointerId);
+        }
+      } catch (err) {}
+      if (!this.ctx) this.ctx = canvas.getContext('2d');
       const pos = getPos(e);
       this.ctx.beginPath();
       this.ctx.moveTo(pos.x, pos.y);
-    });
+    };
 
-    this.canvas.addEventListener('pointermove', (e) => {
+    const moveDraw = (e) => {
       if (!this.isDrawing) return;
+      if (e.type === 'touchmove') e.preventDefault();
       const pos = getPos(e);
       this.ctx.lineTo(pos.x, pos.y);
       this.ctx.stroke();
-    });
+    };
 
-    const stopDrawing = (e) => {
+    const stopDraw = (e) => {
       if (this.isDrawing) {
         this.isDrawing = false;
-        try { this.canvas.releasePointerCapture(e.pointerId); } catch(err) {}
+        try {
+          if (e && e.pointerId && canvas.releasePointerCapture) {
+            canvas.releasePointerCapture(e.pointerId);
+          }
+        } catch (err) {}
       }
     };
 
-    this.canvas.addEventListener('pointerup', stopDrawing);
-    this.canvas.addEventListener('pointercancel', stopDrawing);
+    // Pointer events
+    canvas.addEventListener('pointerdown', startDraw);
+    canvas.addEventListener('pointermove', moveDraw);
+    canvas.addEventListener('pointerup', stopDraw);
+    canvas.addEventListener('pointercancel', stopDraw);
+    canvas.addEventListener('pointerleave', stopDraw);
+
+    // Touch events fallback
+    canvas.addEventListener('touchstart', startDraw, { passive: false });
+    canvas.addEventListener('touchmove', moveDraw, { passive: false });
+    canvas.addEventListener('touchend', stopDraw, { passive: false });
+    canvas.addEventListener('touchcancel', stopDraw, { passive: false });
+
+    // Mouse events fallback
+    canvas.addEventListener('mousedown', startDraw);
+    canvas.addEventListener('mousemove', moveDraw);
+    canvas.addEventListener('mouseup', stopDraw);
+    canvas.addEventListener('mouseleave', stopDraw);
+
+    window.addEventListener('resize', () => {
+      const modal = document.getElementById('modalPengajuan');
+      if (modal && !modal.classList.contains('modal-hidden')) {
+        if (!this.state.hasSigned) {
+          this.setupSignatureCanvas(false);
+        }
+      }
+    });
+
+    this._sigEventsBound = true;
+    this.setupSignatureCanvas(false);
   },
 
   clearSignature() {
@@ -1078,57 +1171,86 @@ const App = {
     this.canvasKetua = document.getElementById('sigCanvasKetua');
     if (!this.canvasKetua) return;
 
-    this.ctxKetua = this.canvasKetua.getContext('2d');
+    if (this._ketuaSigEventsBound) {
+      this.setupSignatureCanvas(true);
+      return;
+    }
 
-    const resizeCanvasKetua = () => {
-      if (!this.canvasKetua) return;
-      const rect = this.canvasKetua.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
-      this.canvasKetua.width = rect.width * dpr;
-      this.canvasKetua.height = rect.height * dpr;
-      this.ctxKetua.scale(dpr, dpr);
-      this.ctxKetua.strokeStyle = '#92400e'; // Warm deep amber
-      this.ctxKetua.lineWidth = 2.5;
-      this.ctxKetua.lineCap = 'round';
-      this.ctxKetua.lineJoin = 'round';
-    };
-
-    window.addEventListener('resize', resizeCanvasKetua);
-    setTimeout(resizeCanvasKetua, 200);
-
+    const canvas = this.canvasKetua;
     const getPos = (e) => {
-      const rect = this.canvasKetua.getBoundingClientRect();
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+      const clientY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
       return {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top
+        x: clientX - rect.left,
+        y: clientY - rect.top
       };
     };
 
-    this.canvasKetua.addEventListener('pointerdown', (e) => {
+    const startDraw = (e) => {
+      if (e.type === 'touchstart') e.preventDefault();
       this.isDrawingKetua = true;
       this.state.hasKetuaSigned = true;
-      this.canvasKetua.setPointerCapture(e.pointerId);
+      try {
+        if (e.pointerId && canvas.setPointerCapture) {
+          canvas.setPointerCapture(e.pointerId);
+        }
+      } catch (err) {}
+      if (!this.ctxKetua) this.ctxKetua = canvas.getContext('2d');
       const pos = getPos(e);
       this.ctxKetua.beginPath();
       this.ctxKetua.moveTo(pos.x, pos.y);
-    });
+    };
 
-    this.canvasKetua.addEventListener('pointermove', (e) => {
+    const moveDraw = (e) => {
       if (!this.isDrawingKetua) return;
+      if (e.type === 'touchmove') e.preventDefault();
       const pos = getPos(e);
       this.ctxKetua.lineTo(pos.x, pos.y);
       this.ctxKetua.stroke();
-    });
+    };
 
-    const stopDrawingKetua = (e) => {
+    const stopDraw = (e) => {
       if (this.isDrawingKetua) {
         this.isDrawingKetua = false;
-        try { this.canvasKetua.releasePointerCapture(e.pointerId); } catch(err) {}
+        try {
+          if (e && e.pointerId && canvas.releasePointerCapture) {
+            canvas.releasePointerCapture(e.pointerId);
+          }
+        } catch (err) {}
       }
     };
 
-    this.canvasKetua.addEventListener('pointerup', stopDrawingKetua);
-    this.canvasKetua.addEventListener('pointercancel', stopDrawingKetua);
+    // Pointer events
+    canvas.addEventListener('pointerdown', startDraw);
+    canvas.addEventListener('pointermove', moveDraw);
+    canvas.addEventListener('pointerup', stopDraw);
+    canvas.addEventListener('pointercancel', stopDraw);
+    canvas.addEventListener('pointerleave', stopDraw);
+
+    // Touch events fallback
+    canvas.addEventListener('touchstart', startDraw, { passive: false });
+    canvas.addEventListener('touchmove', moveDraw, { passive: false });
+    canvas.addEventListener('touchend', stopDraw, { passive: false });
+    canvas.addEventListener('touchcancel', stopDraw, { passive: false });
+
+    // Mouse events fallback
+    canvas.addEventListener('mousedown', startDraw);
+    canvas.addEventListener('mousemove', moveDraw);
+    canvas.addEventListener('mouseup', stopDraw);
+    canvas.addEventListener('mouseleave', stopDraw);
+
+    window.addEventListener('resize', () => {
+      const modal = document.getElementById('modalApprovalKetua');
+      if (modal && !modal.classList.contains('modal-hidden')) {
+        if (!this.state.hasKetuaSigned) {
+          this.setupSignatureCanvas(true);
+        }
+      }
+    });
+
+    this._ketuaSigEventsBound = true;
+    this.setupSignatureCanvas(true);
   },
 
   clearKetuaSignature() {
@@ -1179,11 +1301,17 @@ const App = {
     if (masukEl) masukEl.value = `${endH}:${curM}`;
 
     document.getElementById('modalPengajuan').classList.remove('modal-hidden');
-    this.clearSignature();
+    this.initSignaturePad();
+    this.setupSignatureCanvas(false);
 
+    requestAnimationFrame(() => {
+      this.setupSignatureCanvas(false);
+    });
     setTimeout(() => {
-      this.initSignaturePad();
-    }, 150);
+      if (!this.state.hasSigned) {
+        this.setupSignatureCanvas(false);
+      }
+    }, 100);
 
     lucide.createIcons();
   },

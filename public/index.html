@@ -62,7 +62,7 @@
         </p>
       </div>
 
-      <!-- Tab Navigasi Masuk / Daftar Akun Pegawai -->
+      <!-- Tab Navigasi Masuk / Daftar Akun Baru -->
       <div class="flex p-1 bg-slate-200/90 rounded-2xl text-xs font-bold">
         <button id="tabBtnLogin" type="button" onclick="App.switchAuthTab('login')"
           class="flex-1 py-2 rounded-xl text-center transition bg-white text-court-800 shadow-xs font-bold">
@@ -70,7 +70,7 @@
         </button>
         <button id="tabBtnRegister" type="button" onclick="App.switchAuthTab('register')"
           class="flex-1 py-2 rounded-xl text-center transition text-slate-600 hover:text-slate-900 font-semibold">
-          Daftar Pegawai
+          Daftar Akun Baru
         </button>
       </div>
 
@@ -94,15 +94,15 @@
         </button>
       </form>
 
-      <!-- Form Pendaftaran Akun Pegawai Baru -->
+      <!-- Form Pendaftaran Akun Baru (Pegawai & Pejabat) -->
       <form id="formRegister" class="hidden bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-3.5 shadow-xs">
         <div class="text-left border-b border-slate-200/80 pb-2">
-          <h3 class="text-xs font-bold text-slate-900">Daftar Akun Pegawai Baru</h3>
-          <p class="text-[10px] text-slate-500">Buat akun menggunakan Nama dan NIP</p>
+          <h3 class="text-xs font-bold text-slate-900">Daftar Akun Baru (Pegawai & Pejabat)</h3>
+          <p class="text-[10px] text-slate-500">Pendaftaran aparatur PA Gunung Sugih menggunakan Nama dan NIP</p>
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Nama Pegawai *</label>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Nama Lengkap Pegawai / Pejabat *</label>
           <input type="text" id="regNama" required placeholder="Masukkan nama lengkap Anda"
             class="w-full px-3 py-2.5 text-xs bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-court-600 font-medium">
         </div>
@@ -131,7 +131,7 @@
 
         <button type="submit" id="btnSubmitRegister"
           class="w-full py-3 rounded-xl text-xs font-bold bg-court-700 hover:bg-court-800 text-white shadow-md transition flex items-center justify-center gap-1.5">
-          <i data-lucide="user-plus" class="w-4 h-4"></i> Daftar Akun Pegawai
+          <i data-lucide="user-plus" class="w-4 h-4"></i> Daftar Akun Baru
         </button>
 
         <p class="text-[10px] text-center text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-2 font-medium">
@@ -990,7 +990,7 @@
             </button>
           </div>
           <div class="border-2 border-dashed border-slate-300 rounded-xl overflow-hidden bg-slate-50">
-            <canvas id="sigCanvas" class="w-full h-28 block bg-slate-50"></canvas>
+            <canvas id="sigCanvas" class="w-full h-28 block bg-slate-50" style="touch-action: none; cursor: crosshair;"></canvas>
           </div>
           <p class="text-[9px] text-slate-400 mt-0.5">Goreskan tanda tangan dengan jari Anda di kotak atas.</p>
         </div>
@@ -1181,7 +1181,7 @@
           </button>
         </div>
         <div class="border-2 border-dashed border-amber-300 rounded-xl overflow-hidden bg-amber-50/30">
-          <canvas id="sigCanvasKetua" class="w-full h-28 block bg-white"></canvas>
+          <canvas id="sigCanvasKetua" class="w-full h-28 block bg-white" style="touch-action: none; cursor: crosshair;"></canvas>
         </div>
         <p class="text-[9px] text-slate-400 mt-0.5">Bubuhkan tanda tangan Anda di atas untuk mengesahkan surat izin ini.</p>
       </div>
